@@ -4,6 +4,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ListenedTo",
   description: "Track and rate the albums you've listened to.",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 // Draait synchroon vóór React hydration — zelfde patroon als next-themes
