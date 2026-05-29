@@ -1,0 +1,204 @@
+import { redirect } from "next/navigation";
+import Logo from "@/components/Logo";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { logout } from "@/app/actions/auth";
+import AlbumCover from "@/components/AlbumCover";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
+import AvatarUpload from "@/components/AvatarUpload";
+import FavorietenSlots from "@/components/FavorietenSlots";
+import LijstBeheer from "@/components/LijstBeheer";
+
+function Sterren({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5 items-center">
+      {[1, 2, 3, 4, 5].map((star) => {
+        const vol = rating >= star;
+        const half = !vol && rating >= star - 0.5;
+        return (
+          <span key={star} className={`text-xs ${vol || half ? "text-[var(--accent)]" : "text-stone-700"}`}>
+            {vol ? "★" : half ? "⯨" : "☆"}
+          </span>
+        );
+      })}
+      <span className="text-stone-600 text-xs ml-1">{rating}</span>
+    </div>
+  );
+}
+
+export default async function ProfielPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: ratings } = await supabase
+    .from("ratings").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
+
+  const { data: volgers } = await supabase
+    .from("follows").select("follower_id").eq("following_id", user.id);
+
+  const { data: volgend } = await supabase
+    .from("follows").select("following_id").eq("follower_id", user.id);
+
+  const { data: profiel } = await supabase
+    .from("profiles").select("username, avatar_url").eq("id", user.id).single();
+
+  const { data: favorieten } = await supabase
+    .from("favorites").select("*").eq("user_id", user.id).order("position");
+
+  const { data: lijstenRaw } = await supabase
+    .from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false });
+
+  const lijsten = await Promise.all((lijstenRaw ?? []).map(async (l) => {
+    const { count } = await supabase.from("list_items").select("id", { count: "exact", head: true }).eq("list_id", l.id);
+    return { ...l, _count: count ?? 0 };
+  }));
+
+  const username = profiel?.username ?? user.user_metadata?.username ?? user.email;
+  const avatarUrl = profiel?.avatar_url ?? null;
+  const aantalRatings = ratings?.length ?? 0;
+  const gemiddelde = aantalRatings > 0
+    ? (ratings!.reduce((sum, r) => sum + r.rating, 0) / aantalRatings).toFixed(1)
+    : null;
+
+  const artiestTelling: Record<string, { count: number; totalRating: number }> = {};
+  ratings?.forEach((r) => {
+    if (!artiestTelling[r.artist_name]) artiestTelling[r.artist_name] = { count: 0, totalRating: 0 };
+    artiestTelling[r.artist_name].count++;
+    artiestTelling[r.artist_name].totalRating += r.rating;
+  });
+  const topArtiesten = Object.entries(artiestTelling)
+    .sort((a, b) => b[1].count - a[1].count || b[1].totalRating - a[1].totalRating)
+    .slice(0, 5);
+
+  const verdeling: Record<string, number> = { "5": 0, "4.5": 0, "4": 0, "3.5": 0, "3": 0, "2.5": 0, "2": 0, "1.5": 0, "1": 0, "0.5": 0 };
+  ratings?.forEach((r) => { verdeling[String(r.rating)] = (verdeling[String(r.rating)] ?? 0) + 1; });
+  const maxVerdeling = Math.max(...Object.values(verdeling), 1);
+
+  return (
+    <div className="min-h-screen text-stone-50">
+      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
+        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
+          <Logo />
+          ListenedTo
+        </Link>
+        <div className="flex items-center gap-3">
+          <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <Link href="/gebruikers" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
+          <form action={logout}>
+            <button type="submit" className="text-sm text-stone-500 hover:text-stone-200 transition-colors">Log out</button>
+          </form>
+          <ThemeSwitcher />
+        </div>
+      </header>
+
+      <main className="max-w-2xl mx-auto px-5 py-10 space-y-8">
+
+        {/* Profile header */}
+        <div className="flex items-center gap-5">
+          <AvatarUpload userId={user.id} username={username} avatarUrl={avatarUrl} />
+          <div>
+            <h1 className="text-2xl font-bold text-stone-50">{username}</h1>
+            <div className="flex gap-4 mt-1.5 text-sm text-stone-500 flex-wrap">
+              <span className="text-stone-300 font-medium">{aantalRatings} ratings</span>
+              <Link href="/profiel/volgers" className="hover:text-stone-100 transition-colors">{volgers?.length ?? 0} followers</Link>
+              <Link href="/profiel/volgend" className="hover:text-stone-100 transition-colors">{volgend?.length ?? 0} following</Link>
+              {gemiddelde && <span className="text-[var(--accent)] font-medium">⌀ {gemiddelde} ★</span>}
+            </div>
+          </div>
+        </div>
+
+        {/* Favourites */}
+        <div>
+          <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-3 font-semibold">Favourite albums</h2>
+          <FavorietenSlots favorieten={favorieten ?? []} bewerkbaar={true} />
+        </div>
+
+        {/* Stats */}
+        {aantalRatings > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {topArtiesten.length > 0 && (
+              <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60">
+                <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Most rated</h2>
+                <div className="space-y-3">
+                  {topArtiesten.map(([artiest, info], i) => (
+                    <div key={artiest} className="flex items-center gap-3">
+                      <span className="text-stone-700 text-xs w-4 font-medium">{i + 1}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold truncate text-stone-100">{artiest}</p>
+                        <p className="text-stone-600 text-xs">
+                          {info.count} {info.count === 1 ? "album" : "albums"} · avg. {(info.totalRating / info.count).toFixed(1)} ★
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60">
+              <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Rating distribution</h2>
+              <div className="space-y-1.5">
+                {["5", "4.5", "4", "3.5", "3", "2.5", "2", "1.5", "1", "0.5"].map((score) => (
+                  <div key={score} className="flex items-center gap-2">
+                    <span className="text-stone-600 text-xs w-6 text-right">{score}</span>
+                    <div className="flex-1 bg-stone-800 rounded-full h-1.5 overflow-hidden">
+                      <div className="bg-[var(--accent)] h-full rounded-full transition-all" style={{ width: `${(verdeling[score] / maxVerdeling) * 100}%` }} />
+                    </div>
+                    <span className="text-stone-700 text-xs w-4">{verdeling[score] || ""}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Lists */}
+        <LijstBeheer lijsten={lijsten} bewerkbaar={true} />
+
+        {/* Ratings */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold">Ratings</h2>
+            <Link href="/zoeken" className="text-xs text-[var(--accent)] font-medium">+ Add album</Link>
+          </div>
+
+          {aantalRatings === 0 ? (
+            <div className="text-center py-16 bg-stone-900/60 rounded-3xl border border-stone-800">
+              <p className="text-stone-600 mb-4">You haven't rated any albums yet.</p>
+              <Link href="/zoeken" className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-colors inline-block">
+                Search albums
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {ratings!.map((r) => (
+                <Link
+                  key={r.id}
+                  href={`/album?name=${encodeURIComponent(r.album_name)}&artist=${encodeURIComponent(r.artist_name)}${r.album_image ? `&image=${encodeURIComponent(r.album_image)}` : ""}${r.album_url ? `&url=${encodeURIComponent(r.album_url)}` : ""}`}
+                  className="flex gap-4 bg-stone-900 hover:bg-stone-800/80 rounded-2xl p-3 transition-colors border border-stone-800/40 hover:border-stone-700"
+                >
+                  <div className="w-12 h-12 flex-shrink-0 rounded-xl overflow-hidden bg-stone-800">
+                    <AlbumCover src={r.album_image} alt={r.album_name} width={48} height={48} className="object-cover w-full h-full" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm truncate text-stone-100">{r.album_name}</p>
+                    <p className="text-stone-500 text-xs truncate">{r.artist_name}</p>
+                    <Sterren rating={r.rating} />
+                  </div>
+                  <div className="flex flex-col items-end justify-between">
+                    <span className="text-stone-700 text-xs">
+                      {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    </span>
+                    {(r.moment_wanneer || r.moment_waar) && (
+                      <span className="text-[var(--accent)] text-xs">📍</span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  );
+}
