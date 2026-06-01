@@ -271,7 +271,7 @@ function AlbumPageInner() {
                   </div>
                   <button
                     onClick={() => startEdit(listen)}
-                    className="text-stone-700 hover:text-[var(--accent)] text-xs transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
+                    className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white transition-colors flex-shrink-0"
                   >
                     Edit
                   </button>
