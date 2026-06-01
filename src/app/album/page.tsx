@@ -157,12 +157,13 @@ function AlbumPageInner() {
 
   async function deleteListen(id: string) {
     await supabase.from("ratings").delete().eq("id", id);
-    setListens(prev => {
-      const updated = prev.filter(l => l.id !== id);
-      if (updated.length === 0) setShowForm(true);
-      return updated;
-    });
-    if (editingId === id) { setShowForm(false); setEditingId(null); }
+    const updated = listens.filter(l => l.id !== id);
+    if (updated.length === 0) {
+      router.back();
+    } else {
+      setListens(updated);
+      if (editingId === id) { setShowForm(false); setEditingId(null); }
+    }
   }
 
   const currentListenNumber = editingId
