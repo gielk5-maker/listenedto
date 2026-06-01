@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { slaThemaOp } from "@/app/actions/theme";
 
 const THEMAS = {
   green:  { label: "Green",  accent: "#22c55e", dark: "#15803d", text: "#0c0a09",
@@ -21,6 +22,7 @@ type ThemaId = keyof typeof THEMAS;
 
 export default function ThemeSettings() {
   const [active, setActive] = useState<ThemaId>("green");
+  const [, startTransition] = useTransition();
 
   useEffect(() => {
     const saved = (localStorage.getItem("theme") ?? "green") as ThemaId;
@@ -33,6 +35,8 @@ export default function ThemeSettings() {
     for (const [k, v] of Object.entries(vars)) r.style.setProperty(k, v);
     localStorage.setItem("theme", id);
     setActive(id);
+    // Save to database so it persists across devices/logins
+    startTransition(() => slaThemaOp(id));
   }
 
   return (

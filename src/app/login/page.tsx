@@ -1,10 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
+
+const GREEN_VARS: Record<string, string> = {
+  "--accent": "#22c55e", "--accent-hover": "#4ade80", "--accent-dark": "#15803d",
+  "--accent-text": "#0c0a09", "--glow-1": "rgba(34,197,94,0.45)",
+  "--glow-2": "rgba(21,128,61,0.35)", "--glow-3": "rgba(20,83,45,0.18)",
+};
+
+const ALL_THEMES: Record<string, Record<string, string>> = {
+  green:  { "--accent":"#22c55e","--accent-hover":"#4ade80","--accent-dark":"#15803d","--accent-text":"#0c0a09","--glow-1":"rgba(34,197,94,0.45)","--glow-2":"rgba(21,128,61,0.35)","--glow-3":"rgba(20,83,45,0.18)" },
+  amber:  { "--accent":"#f59e0b","--accent-hover":"#fbbf24","--accent-dark":"#ea580c","--accent-text":"#0c0a09","--glow-1":"rgba(251,146,60,0.45)","--glow-2":"rgba(245,158,11,0.35)","--glow-3":"rgba(234,88,12,0.18)" },
+  red:    { "--accent":"#ef4444","--accent-hover":"#f87171","--accent-dark":"#dc2626","--accent-text":"#ffffff","--glow-1":"rgba(239,68,68,0.45)","--glow-2":"rgba(220,38,38,0.35)","--glow-3":"rgba(185,28,28,0.18)" },
+  blue:   { "--accent":"#3b82f6","--accent-hover":"#60a5fa","--accent-dark":"#1d4ed8","--accent-text":"#ffffff","--glow-1":"rgba(59,130,246,0.45)","--glow-2":"rgba(29,78,216,0.35)","--glow-3":"rgba(30,64,175,0.18)" },
+  yellow: { "--accent":"#eab308","--accent-hover":"#facc15","--accent-dark":"#ca8a04","--accent-text":"#0c0a09","--glow-1":"rgba(234,179,8,0.45)","--glow-2":"rgba(202,138,4,0.35)","--glow-3":"rgba(161,110,3,0.18)" },
+  purple: { "--accent":"#a855f7","--accent-hover":"#c084fc","--accent-dark":"#7e22ce","--accent-text":"#ffffff","--glow-1":"rgba(168,85,247,0.45)","--glow-2":"rgba(126,34,206,0.35)","--glow-3":"rgba(107,33,168,0.18)" },
+};
+
+function applyTheme(vars: Record<string, string>) {
+  const r = document.documentElement;
+  for (const [k, v] of Object.entries(vars)) r.style.setProperty(k, v);
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,13 +34,18 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
+  // Always show green on login page
+  useEffect(() => {
+    applyTheme(GREEN_VARS);
+  }, []);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError("Incorrect email or password.");
@@ -29,11 +54,19 @@ export default function LoginPage() {
     }
 
     if (!remember) {
-      // Remove from localStorage so session doesn't survive browser close
       const keys = Object.keys(localStorage).filter(k => k.startsWith("sb-"));
       keys.forEach(k => localStorage.removeItem(k));
-      // Mark in sessionStorage so session works for current tab
       sessionStorage.setItem("lt-session", "1");
+    }
+
+    // Fetch saved theme from profile and apply it
+    if (data.user) {
+      const { data: profiel } = await supabase
+        .from("profiles").select("theme").eq("id", data.user.id).single();
+      const theme = profiel?.theme ?? "green";
+      const vars = ALL_THEMES[theme] ?? GREEN_VARS;
+      applyTheme(vars);
+      localStorage.setItem("theme", theme);
     }
 
     router.push("/feed");
@@ -67,7 +100,6 @@ export default function LoginPage() {
             />
           </div>
 
-          {/* Remember me */}
           <label className="flex items-center gap-3 cursor-pointer group">
             <div
               onClick={() => setRemember(v => !v)}
