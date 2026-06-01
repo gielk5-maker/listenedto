@@ -69,8 +69,7 @@ export default function LoginPage() {
       localStorage.setItem("theme", theme);
     }
 
-    router.push("/feed");
-    router.refresh();
+    window.location.href = "/feed";
   }
 
   return (

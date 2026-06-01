@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { verwijderAlbumUitLijst } from "@/app/actions/profiel";
+import AlbumToevoegen from "@/components/AlbumToevoegen";
 
 export default async function LijstPagina({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -39,17 +40,22 @@ export default async function LijstPagina({ params }: { params: Promise<{ id: st
 
       <main className="max-w-2xl mx-auto px-5 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-stone-50">{lijst.name}</h1>
-          {lijst.description && <p className="text-stone-500 mt-1">{lijst.description}</p>}
-          <p className="text-stone-700 text-xs mt-2">
-            by <Link href={`/gebruiker/${eigenaar?.username}`} className="hover:text-stone-400 transition-colors">{eigenaar?.username}</Link> · {items?.length ?? 0} albums
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-stone-50">{lijst.name}</h1>
+              {lijst.description && <p className="text-stone-500 mt-1">{lijst.description}</p>}
+              <p className="text-stone-700 text-xs mt-2">
+                by <Link href={`/gebruiker/${eigenaar?.username}`} className="hover:text-stone-400 transition-colors">{eigenaar?.username}</Link> · {items?.length ?? 0} albums
+              </p>
+            </div>
+            {isEigenaar && <AlbumToevoegen listId={id} />}
+          </div>
         </div>
 
         {!items || items.length === 0 ? (
           <div className="text-center py-16 bg-stone-900/60 rounded-3xl border border-stone-800">
             <p className="text-stone-600 mb-2">No albums in this list yet.</p>
-            {isEigenaar && <p className="text-stone-700 text-sm">Add albums from the album page.</p>}
+            {isEigenaar && <AlbumToevoegen listId={id} />}
           </div>
         ) : (
           <div className="space-y-2">
