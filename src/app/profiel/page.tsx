@@ -49,6 +49,13 @@ export default async function ProfielPage() {
   const { data: lijstenRaw } = await supabase
     .from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false });
 
+  // Concerts
+  const { data: concertReviews } = await supabase
+    .from("concert_reviews")
+    .select("*, concert_events(*)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
   const lijsten = await Promise.all((lijstenRaw ?? []).map(async (l) => {
     const { count } = await supabase.from("list_items").select("id", { count: "exact", head: true }).eq("list_id", l.id);
     return { ...l, _count: count ?? 0 };
@@ -154,6 +161,45 @@ export default async function ProfielPage() {
 
         {/* Lists */}
         <LijstBeheer lijsten={lijsten} bewerkbaar={true} />
+
+        {/* Concerts */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold">Concerts</h2>
+            <Link href="/concert/loggen" className="text-xs text-[var(--accent)] font-medium">+ Log concert</Link>
+          </div>
+          {!concertReviews || concertReviews.length === 0 ? (
+            <div className="text-center py-10 bg-stone-900/60 rounded-3xl border border-stone-800">
+              <p className="text-stone-600 text-sm mb-3">No concerts logged yet.</p>
+              <Link href="/concert/loggen" className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-5 py-2.5 text-sm transition-opacity inline-block">
+                Log your first concert
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {concertReviews.map((r) => {
+                const event = r.concert_events as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
+                if (!event) return null;
+                return (
+                  <Link key={r.id} href={`/concert/${event.id}`}
+                    className="flex items-center gap-4 bg-stone-900 hover:bg-stone-800/80 rounded-2xl p-3.5 transition-colors border border-stone-800/40 hover:border-stone-700">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-lg flex-shrink-0">
+                      🎤
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate text-stone-100">{event.artist_name}</p>
+                      <p className="text-stone-500 text-xs truncate">{event.venue ? `${event.venue} · ` : ""}{event.city}, {event.country}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="text-stone-700 text-xs">{new Date(event.concert_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+                      {r.rating && <p className="text-[var(--accent)] text-xs font-medium">{r.rating} ★</p>}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Ratings */}
         <div>
