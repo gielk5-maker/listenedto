@@ -57,7 +57,17 @@ export default function LijstBeheer({ lijsten: initLijsten, bewerkbaar }: Props)
       </div>
 
       {lijsten.length === 0 ? (
-        <p className="text-stone-700 text-sm text-center py-6">No lists yet.</p>
+        <div className="text-center py-10 bg-stone-900/60 rounded-3xl border border-stone-800">
+          <p className="text-stone-600 text-sm mb-3">No lists yet.</p>
+          {bewerkbaar && (
+            <button
+              onClick={() => setNieuwOpen(true)}
+              className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-5 py-2.5 text-sm transition-opacity inline-block"
+            >
+              Create your first list
+            </button>
+          )}
+        </div>
       ) : (
         <div className="space-y-2">
           {lijsten.map((lijst) => (
