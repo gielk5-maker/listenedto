@@ -78,7 +78,8 @@ function AlbumPageInner() {
   const type = (params.get("type") ?? "album") as "album" | "track";
 
   const [listens, setListens] = useState<Listen[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null); // null = new listen
+  const [loaded, setLoaded] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
@@ -89,20 +90,18 @@ function AlbumPageInner() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      setLoaded(true);
+      if (!user) { setShowForm(true); return; }
       const { data } = await supabase
         .from("ratings")
         .select("id, listen_number, rating, review, created_at")
         .eq("user_id", user.id)
         .eq("album_name", name)
         .eq("artist_name", artist)
-        .eq("type", type)
         .order("listen_number", { ascending: true });
-      if (data) {
-        setListens(data);
-        // If no listens yet, show the form right away
-        if (data.length === 0) setShowForm(true);
-      }
+      const existing = data ?? [];
+      setListens(existing);
+      if (existing.length === 0) setShowForm(true);
     }
     load();
   }, [name, artist]);
@@ -112,6 +111,7 @@ function AlbumPageInner() {
     setRating(listen.rating ?? 0);
     setReview(listen.review ?? "");
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startNewListen() {
@@ -128,14 +128,12 @@ function AlbumPageInner() {
     if (!user) { router.push("/login"); return; }
 
     if (editingId) {
-      // Update existing listen
       const { error } = await supabase.from("ratings")
         .update({ rating: rating || null, review: review || null })
         .eq("id", editingId);
       if (error) { setError(error.message); setSaving(false); return; }
       setListens(prev => prev.map(l => l.id === editingId ? { ...l, rating: rating || null, review: review || null } : l));
     } else {
-      // New listen
       const nextNumber = listens.length + 1;
       const { data, error } = await supabase.from("ratings").insert({
         user_id: user.id, type, album_name: name, artist_name: artist,
@@ -149,17 +147,25 @@ function AlbumPageInner() {
 
     setSaving(false);
     setSaved(true);
-    setTimeout(() => { setSaved(false); setShowForm(false); setEditingId(null); }, 1200);
+    setTimeout(() => {
+      setSaved(false);
+      setShowForm(listens.length === 0 && !editingId ? false : false);
+      setEditingId(null);
+    }, 1200);
   }
 
   async function deleteListen(id: string) {
     await supabase.from("ratings").delete().eq("id", id);
-    setListens(prev => prev.filter(l => l.id !== id));
+    setListens(prev => {
+      const updated = prev.filter(l => l.id !== id);
+      if (updated.length === 0) setShowForm(true);
+      return updated;
+    });
     if (editingId === id) { setShowForm(false); setEditingId(null); }
   }
 
   const currentListenNumber = editingId
-    ? listens.find(l => l.id === editingId)?.listen_number ?? 1
+    ? (listens.find(l => l.id === editingId)?.listen_number ?? 1)
     : listens.length + 1;
 
   return (
@@ -185,8 +191,8 @@ function AlbumPageInner() {
           </div>
         </div>
 
-        {/* Listen form */}
-        {showForm && (
+        {/* Rating form */}
+        {loaded && showForm && (
           <div className="bg-stone-900 rounded-3xl p-6 space-y-5 border border-stone-800/60">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-bold text-stone-300">
@@ -251,20 +257,19 @@ function AlbumPageInner() {
             </div>
             <div className="space-y-2">
               {[...listens].reverse().map((listen) => (
-                <div key={listen.id}
-                  className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-start gap-4">
-                  <div className="flex-shrink-0 text-center min-w-[48px]">
+                <div key={listen.id} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-start gap-4 group">
+                  <div className="flex-shrink-0 text-center min-w-[52px]">
                     <p className="text-[var(--accent)] text-xs font-bold">{ordinal(listen.listen_number)}</p>
-                    <p className="text-stone-700 text-[10px]">{new Date(listen.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+                    <p className="text-stone-700 text-[10px] mt-0.5">{new Date(listen.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
                   </div>
                   <div className="flex-1 min-w-0">
                     {listen.rating && <SmallStars rating={listen.rating} />}
                     {listen.review && <p className="text-stone-400 text-sm mt-1 italic">"{listen.review}"</p>}
-                    {!listen.rating && !listen.review && <p className="text-stone-700 text-sm">No rating or review</p>}
+                    {!listen.rating && !listen.review && <p className="text-stone-700 text-sm italic">No rating or review</p>}
                   </div>
                   <button
                     onClick={() => startEdit(listen)}
-                    className="text-stone-700 hover:text-stone-400 text-xs transition-colors flex-shrink-0"
+                    className="text-stone-700 hover:text-[var(--accent)] text-xs transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100"
                   >
                     Edit
                   </button>

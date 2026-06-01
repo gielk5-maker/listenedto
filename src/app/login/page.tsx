@@ -28,11 +28,12 @@ export default function LoginPage() {
       return;
     }
 
-    // If not remembering, sign out when tab closes
     if (!remember) {
-      window.addEventListener("beforeunload", () => {
-        supabase.auth.signOut();
-      }, { once: true });
+      // Remove from localStorage so session doesn't survive browser close
+      const keys = Object.keys(localStorage).filter(k => k.startsWith("sb-"));
+      keys.forEach(k => localStorage.removeItem(k));
+      // Mark in sessionStorage so session works for current tab
+      sessionStorage.setItem("lt-session", "1");
     }
 
     router.push("/feed");

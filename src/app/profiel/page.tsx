@@ -9,6 +9,7 @@ import ThemeSwitcher from "@/components/ThemeSwitcher";
 import AvatarUpload from "@/components/AvatarUpload";
 import FavorietenSlots from "@/components/FavorietenSlots";
 import LijstBeheer from "@/components/LijstBeheer";
+import RatingVerdeling from "@/components/RatingVerdeling";
 
 
 
@@ -130,17 +131,7 @@ export default async function ProfielPage() {
             )}
             <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60">
               <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Rating distribution</h2>
-              <div className="space-y-1.5">
-                {["5", "4.5", "4", "3.5", "3", "2.5", "2", "1.5", "1", "0.5"].map((score) => (
-                  <div key={score} className="flex items-center gap-2">
-                    <span className="text-stone-600 text-xs w-6 text-right">{score}</span>
-                    <div className="flex-1 bg-stone-800 rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-[var(--accent)] h-full rounded-full transition-all" style={{ width: `${(verdeling[score] / maxVerdeling) * 100}%` }} />
-                    </div>
-                    <span className="text-stone-700 text-xs w-4">{verdeling[score] || ""}</span>
-                  </div>
-                ))}
-              </div>
+              <RatingVerdeling verdeling={verdeling} totaal={aantalRatings} />
             </div>
           </div>
         )}
