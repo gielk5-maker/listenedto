@@ -9,46 +9,60 @@ type Props = {
 
 export default function RatingVerdeling({ verdeling, totaal }: Props) {
   const [hovered, setHovered] = useState<string | null>(null);
-  const scores = ["5", "4.5", "4", "3.5", "3", "2.5", "2", "1.5", "1", "0.5"];
-  const max = Math.max(...Object.values(verdeling), 1);
+  const scores = ["0.5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"];
+  const max = Math.max(...scores.map(s => verdeling[s] ?? 0), 1);
 
   return (
-    <div className="space-y-1.5">
-      {scores.map((score) => {
-        const count = verdeling[score] ?? 0;
-        const pct = Math.round((count / totaal) * 100);
-        const barWidth = (count / max) * 100;
-        const isHovered = hovered === score;
+    <div className="w-full">
+      {/* Bars */}
+      <div className="flex items-end gap-1 h-24">
+        {scores.map((score) => {
+          const count = verdeling[score] ?? 0;
+          const heightPct = (count / max) * 100;
+          const pct = totaal > 0 ? Math.round((count / totaal) * 100) : 0;
+          const isHovered = hovered === score;
 
-        return (
-          <div
-            key={score}
-            className="flex items-center gap-2 cursor-default"
-            onMouseEnter={() => setHovered(score)}
-            onMouseLeave={() => setHovered(null)}
-          >
-            <span className="text-stone-600 text-xs w-6 text-right flex-shrink-0">{score}</span>
-            <div className="flex-1 bg-stone-800 rounded-full h-2 overflow-hidden relative">
+          return (
+            <div
+              key={score}
+              className="flex-1 flex flex-col items-center justify-end h-full cursor-default"
+              onMouseEnter={() => setHovered(score)}
+              onMouseLeave={() => setHovered(null)}
+            >
+              {/* Tooltip */}
+              <div className={`text-[10px] mb-1 transition-opacity text-center leading-tight ${isHovered && count > 0 ? "opacity-100" : "opacity-0"}`}>
+                <span className="text-stone-200 font-semibold">{count}</span>
+                <br />
+                <span className="text-stone-500">{pct}%</span>
+              </div>
+              {/* Bar */}
               <div
-                className="h-full rounded-full transition-all duration-200"
+                className="w-full rounded-t-sm transition-all duration-150"
                 style={{
-                  width: `${barWidth}%`,
-                  backgroundColor: isHovered ? "var(--accent-hover)" : "var(--accent)",
+                  height: count > 0 ? `${Math.max(heightPct, 4)}%` : "2px",
+                  backgroundColor: count === 0
+                    ? "rgb(41,37,36)"
+                    : isHovered
+                    ? "var(--accent-hover)"
+                    : "var(--accent)",
+                  opacity: count === 0 ? 0.3 : 1,
                 }}
               />
             </div>
-            <div className="w-16 flex-shrink-0 text-right">
-              {count > 0 ? (
-                <span className={`text-xs transition-colors ${isHovered ? "text-stone-200" : "text-stone-600"}`}>
-                  {isHovered ? `${count} · ${pct}%` : count}
-                </span>
-              ) : (
-                <span className="text-xs text-stone-800">—</span>
-              )}
-            </div>
+          );
+        })}
+      </div>
+
+      {/* Score labels */}
+      <div className="flex gap-1 mt-1.5">
+        {scores.map((score) => (
+          <div key={score} className="flex-1 text-center">
+            <span className={`text-[9px] transition-colors ${hovered === score ? "text-stone-300" : "text-stone-700"}`}>
+              {score}
+            </span>
           </div>
-        );
-      })}
+        ))}
+      </div>
     </div>
   );
 }

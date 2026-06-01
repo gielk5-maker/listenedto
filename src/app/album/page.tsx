@@ -141,6 +141,7 @@ function AlbumPageInner() {
         rating: rating || null, review: review || null,
         listen_number: nextNumber,
       }).select("id, listen_number, rating, review, created_at").single();
+      // Note: run SQL first → alter table ratings add column if not exists listen_number integer not null default 1;
       if (error) { setError(error.message); setSaving(false); return; }
       if (data) setListens(prev => [...prev, data]);
     }
