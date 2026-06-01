@@ -217,7 +217,7 @@ export default async function ProfielPage() {
             </div>
           ) : (
             <div className="space-y-2">
-              {ratings!.map((r) => (
+              {ratings!.slice(0, 3).map((r) => (
                 <Link
                   key={r.id}
                   href={`/album?name=${encodeURIComponent(r.album_name)}&artist=${encodeURIComponent(r.artist_name)}${r.album_image ? `&image=${encodeURIComponent(r.album_image)}` : ""}${r.album_url ? `&url=${encodeURIComponent(r.album_url)}` : ""}`}
@@ -241,6 +241,14 @@ export default async function ProfielPage() {
                   </div>
                 </Link>
               ))}
+              {aantalRatings > 3 && (
+                <Link
+                  href="/profiel/ratings"
+                  className="block w-full text-center py-3 rounded-2xl border border-stone-800 text-stone-500 hover:text-stone-200 hover:border-stone-600 text-sm transition-colors"
+                >
+                  See all {aantalRatings} ratings
+                </Link>
+              )}
             </div>
           )}
         </div>
