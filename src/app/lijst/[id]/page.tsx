@@ -11,14 +11,18 @@ export default async function LijstPagina({ params }: { params: Promise<{ id: st
   const { data: { user } } = await supabase.auth.getUser();
 
   const { data: lijst } = await supabase
-    .from("lists").select("*, profiles(username)").eq("id", id).single();
+    .from("lists").select("*").eq("id", id).single();
 
   if (!lijst) notFound();
 
   const { data: items } = await supabase
     .from("list_items").select("*").eq("list_id", id).order("position", { ascending: true });
 
-  const eigenaar = lijst.profiles as { username: string } | null;
+  // Fetch owner username separately
+  const { data: eigenaarProfiel } = await supabase
+    .from("profiles").select("username").eq("id", lijst.user_id).single();
+
+  const eigenaar = eigenaarProfiel;
   const isEigenaar = user?.id === lijst.user_id;
 
   return (
