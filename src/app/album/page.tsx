@@ -160,53 +160,6 @@ function AlbumPageInner() {
             />
           </div>
 
-          <div>
-            <button
-              type="button"
-              onClick={() => setToonMoment(!toonMoment)}
-              className="flex items-center gap-2 text-xs text-stone-500 uppercase tracking-widest hover:text-stone-300 transition-colors"
-            >
-              <span className="text-base">{toonMoment ? "▾" : "▸"}</span>
-              The moment
-              <span className="normal-case text-stone-700 ml-1">(optional)</span>
-            </button>
-
-            {toonMoment && (
-              <div className="mt-4 space-y-3 pl-1">
-                <div>
-                  <label className="block text-xs text-stone-600 mb-1.5">When did you listen to this?</label>
-                  <input
-                    type="text"
-                    value={momentWanneer}
-                    onChange={(e) => setMomentWanneer(e.target.value)}
-                    placeholder="e.g. summer 2023, driving home..."
-                    className="w-full bg-stone-800 border border-stone-700/60 rounded-2xl px-4 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-stone-600 mb-1.5">Where were you?</label>
-                  <input
-                    type="text"
-                    value={momentWaar}
-                    onChange={(e) => setMomentWaar(e.target.value)}
-                    placeholder="e.g. on the train, home alone, festival..."
-                    className="w-full bg-stone-800 border border-stone-700/60 rounded-2xl px-4 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-stone-600 mb-1.5">What made it special?</label>
-                  <textarea
-                    value={momentBijzonder}
-                    onChange={(e) => setMomentBijzonder(e.target.value)}
-                    rows={2}
-                    placeholder="e.g. first time I really paid attention..."
-                    className="w-full bg-stone-800 border border-stone-700/60 rounded-2xl px-4 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors resize-none text-sm"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
           {error && (
             <p className="text-red-400 text-sm bg-red-950/30 border border-red-900/50 rounded-2xl px-4 py-3">{error}</p>
           )}
