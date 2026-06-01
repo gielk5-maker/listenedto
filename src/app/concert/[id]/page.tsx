@@ -1,26 +1,12 @@
 import { notFound, redirect } from "next/navigation";
+import Sterren from "@/components/Sterren";
 import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
 import { verwijderConcertReview } from "@/app/actions/concert";
 
-function Sterren({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5 items-center">
-      {[1, 2, 3, 4, 5].map((star) => {
-        const vol = rating >= star;
-        const half = !vol && rating >= star - 0.5;
-        return (
-          <span key={star} className={`text-xs ${vol || half ? "text-[var(--accent)]" : "text-stone-700"}`}>
-            {vol ? "★" : half ? "⯨" : "☆"}
-          </span>
-        );
-      })}
-      <span className="text-stone-600 text-xs ml-1">{rating}</span>
-    </div>
-  );
-}
+
 
 export default async function ConcertPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

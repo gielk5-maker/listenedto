@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Sterren from "@/components/Sterren";
 import Logo from "@/components/Logo";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
@@ -6,22 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { volg, ontvolg } from "@/app/actions/sociale";
 import Image from "next/image";
 
-function Sterren({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5 items-center">
-      {[1, 2, 3, 4, 5].map((star) => {
-        const vol = rating >= star;
-        const half = !vol && rating >= star - 0.5;
-        return (
-          <span key={star} className={`text-xs ${vol || half ? "text-[var(--accent)]" : "text-stone-700"}`}>
-            {vol ? "★" : half ? "⯨" : "☆"}
-          </span>
-        );
-      })}
-      <span className="text-stone-600 text-xs ml-1">{rating}</span>
-    </div>
-  );
-}
+
 
 export default async function GebruikerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;

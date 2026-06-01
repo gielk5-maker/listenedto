@@ -9,19 +9,28 @@ import { createClient } from "@/lib/supabase/client";
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState<number | null>(null);
+  const display = hover ?? value;
 
   return (
     <div className="flex gap-1">
       {[1, 2, 3, 4, 5].map((star) => {
-        const full = (hover ?? value) >= star;
-        const half = !full && (hover ?? value) >= star - 0.5;
+        const full = display >= star;
+        const half = !full && display >= star - 0.5;
         return (
-          <div key={star} className="relative w-10 h-10 cursor-pointer" onMouseLeave={() => setHover(null)}>
+          <div key={star} className="relative w-10 h-10 cursor-pointer select-none" onMouseLeave={() => setHover(null)}>
+            {/* Click zones */}
             <div className="absolute left-0 top-0 w-1/2 h-full z-10" onMouseEnter={() => setHover(star - 0.5)} onClick={() => onChange(star - 0.5)} />
             <div className="absolute right-0 top-0 w-1/2 h-full z-10" onMouseEnter={() => setHover(star)} onClick={() => onChange(star)} />
-            <span className={`text-4xl select-none leading-none ${full || half ? "text-[var(--accent)]" : "text-stone-700"}`}>
-              {full ? "★" : half ? "⯨" : "☆"}
-            </span>
+            {/* Star visual */}
+            <span className="text-4xl leading-none text-stone-700">★</span>
+            {(full || half) && (
+              <span
+                className="absolute inset-0 text-4xl leading-none text-[var(--accent)] overflow-hidden"
+                style={{ width: full ? "100%" : "50%" }}
+              >
+                ★
+              </span>
+            )}
           </div>
         );
       })}

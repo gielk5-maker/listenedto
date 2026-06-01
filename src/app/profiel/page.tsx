@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Sterren from "@/components/Sterren";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -9,22 +10,7 @@ import AvatarUpload from "@/components/AvatarUpload";
 import FavorietenSlots from "@/components/FavorietenSlots";
 import LijstBeheer from "@/components/LijstBeheer";
 
-function Sterren({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5 items-center">
-      {[1, 2, 3, 4, 5].map((star) => {
-        const vol = rating >= star;
-        const half = !vol && rating >= star - 0.5;
-        return (
-          <span key={star} className={`text-xs ${vol || half ? "text-[var(--accent)]" : "text-stone-700"}`}>
-            {vol ? "★" : half ? "⯨" : "☆"}
-          </span>
-        );
-      })}
-      <span className="text-stone-600 text-xs ml-1">{rating}</span>
-    </div>
-  );
-}
+
 
 export default async function ProfielPage() {
   const supabase = await createClient();
