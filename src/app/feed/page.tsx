@@ -97,7 +97,8 @@ export default async function FeedPage() {
   const { data: popularRaw } = await supabase
     .from("ratings")
     .select("album_name, artist_name, album_image, album_url")
-    .not("album_name", "is", null);
+    .not("album_name", "is", null)
+    .not("rating", "is", null);
 
   const countMap: Record<string, { album_name: string; artist_name: string; album_image: string | null; album_url: string | null; count: number }> = {};
   popularRaw?.forEach((r) => {
@@ -123,74 +124,107 @@ export default async function FeedPage() {
         </nav>
       </header>
 
-      <main className="max-w-xl mx-auto px-5 py-8">
+      <main className="max-w-5xl mx-auto px-5 py-8">
         <FeedZoekbalk />
 
-        {popularAlbums.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Most popular</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-              {popularAlbums.map((album) => (
-                <Link
-                  key={`${album.album_name}__${album.artist_name}`}
-                  href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
-                  className="flex-shrink-0 w-24 group"
-                >
-                  <div className="w-24 h-24 rounded-xl overflow-hidden bg-stone-800 mb-2 shadow-lg shadow-black/40 group-hover:opacity-80 transition-opacity">
-                    {album.album_image
-                      ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full flex items-center justify-center text-stone-600 text-2xl">♪</div>
-                    }
-                  </div>
-                  <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
-                  <p className="text-stone-600 text-[10px] truncate mt-0.5">{album.artist_name}</p>
-                  <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">{album.count} {album.count === 1 ? "listen" : "listens"}</p>
-                </Link>
-              ))}
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Feed kolom */}
+          <div className="w-full lg:max-w-xl">
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-5 font-semibold">Feed</h2>
+
+            {!feedRatings || feedRatings.length === 0 ? (
+              <div className="text-center py-20">
+                <p className="text-stone-700 text-sm">The people you follow haven't rated anything yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {feedRatings.map((r) => {
+                  const vriendUsername = profielMap[r.user_id] ?? "?";
+                  const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
+                  const eigenRating = eigenRatingMap[albumKey] ?? null;
+                  const likeCount = allLikes?.filter((l) => l.rating_id === r.id).length ?? 0;
+                  const liked = allLikes?.some((l) => l.rating_id === r.id && l.user_id === user.id) ?? false;
+                  const comments = (allComments?.filter((c) => c.rating_id === r.id) ?? []).map((c) => ({
+                    id: c.id,
+                    user_id: c.user_id,
+                    username: profielMap[c.user_id] ?? "?",
+                    content: c.content,
+                    created_at: c.created_at,
+                    likeCount: allCommentLikes?.filter((cl) => cl.comment_id === c.id).length ?? 0,
+                    liked: allCommentLikes?.some((cl) => cl.comment_id === c.id && cl.user_id === user.id) ?? false,
+                  }));
+
+                  return (
+                    <FeedKaart
+                      key={r.id}
+                      r={r}
+                      vriendUsername={vriendUsername}
+                      eigenUserId={user.id}
+                      eigenUsername={eigenUsername}
+                      eigenRating={eigenRating}
+                      likeCount={likeCount}
+                      liked={liked}
+                      comments={comments}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Most popular — sidebar op desktop, boven feed op mobiel */}
+          {popularAlbums.length > 0 && (
+            <div className="w-full lg:w-56 lg:flex-shrink-0 order-first lg:order-last">
+              <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Most rated</h2>
+
+              {/* Mobiel: horizontaal scroll */}
+              <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden" style={{ scrollbarWidth: "none" }}>
+                {popularAlbums.map((album, i) => (
+                  <Link
+                    key={`${album.album_name}__${album.artist_name}`}
+                    href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
+                    className="flex-shrink-0 w-20 group"
+                  >
+                    <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-stone-800 mb-1.5 shadow-lg shadow-black/40 group-hover:opacity-80 transition-opacity">
+                      {album.album_image
+                        ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-stone-600 text-2xl">♪</div>
+                      }
+                      <span className="absolute top-1 left-1 text-[9px] font-bold text-stone-400 bg-stone-950/70 rounded-md px-1 py-0.5">#{i + 1}</span>
+                    </div>
+                    <p className="text-stone-200 text-[11px] font-semibold truncate leading-tight">{album.album_name}</p>
+                    <p className="text-stone-600 text-[10px] truncate mt-0.5">{album.artist_name}</p>
+                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">{album.count} {album.count === 1 ? "rating" : "ratings"}</p>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Desktop: verticale lijst */}
+              <div className="hidden lg:flex flex-col gap-2">
+                {popularAlbums.map((album, i) => (
+                  <Link
+                    key={`${album.album_name}__${album.artist_name}`}
+                    href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
+                    className="flex items-center gap-3 group hover:bg-stone-900 rounded-xl px-2 py-1.5 transition-colors"
+                  >
+                    <span className="text-[10px] font-bold text-stone-700 w-4 text-right flex-shrink-0">#{i + 1}</span>
+                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-stone-800 flex-shrink-0 group-hover:opacity-80 transition-opacity">
+                      {album.album_image
+                        ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-stone-600 text-xs">♪</div>
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
+                      <p className="text-stone-600 text-[10px] truncate">{album.artist_name}</p>
+                      <p className="text-[var(--accent)] text-[10px]">{album.count} {album.count === 1 ? "rating" : "ratings"}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-
-        <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-5 font-semibold">Feed</h2>
-
-        {!feedRatings || feedRatings.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-stone-700 text-sm">The people you follow haven't rated anything yet.</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {feedRatings.map((r) => {
-              const vriendUsername = profielMap[r.user_id] ?? "?";
-              const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
-              const eigenRating = eigenRatingMap[albumKey] ?? null;
-              const likeCount = allLikes?.filter((l) => l.rating_id === r.id).length ?? 0;
-              const liked = allLikes?.some((l) => l.rating_id === r.id && l.user_id === user.id) ?? false;
-              const comments = (allComments?.filter((c) => c.rating_id === r.id) ?? []).map((c) => ({
-                id: c.id,
-                user_id: c.user_id,
-                username: profielMap[c.user_id] ?? "?",
-                content: c.content,
-                created_at: c.created_at,
-                likeCount: allCommentLikes?.filter((cl) => cl.comment_id === c.id).length ?? 0,
-                liked: allCommentLikes?.some((cl) => cl.comment_id === c.id && cl.user_id === user.id) ?? false,
-              }));
-
-              return (
-                <FeedKaart
-                  key={r.id}
-                  r={r}
-                  vriendUsername={vriendUsername}
-                  eigenUserId={user.id}
-                  eigenUsername={eigenUsername}
-                  eigenRating={eigenRating}
-                  likeCount={likeCount}
-                  liked={liked}
-                  comments={comments}
-                />
-              );
-            })}
-          </div>
-        )}
+          )}
+        </div>
       </main>
     </div>
   );
