@@ -202,6 +202,16 @@ function AlbumPageInner() {
   const [communityStats, setCommunityStats] = useState<{ avg: number; total: number } | null>(null);
 
   useEffect(() => {
+    // Reset all state when album changes
+    setListens([]);
+    setLoaded(false);
+    setShowForm(false);
+    setEditingId(null);
+    setRating(0);
+    setReview("");
+    setCommunityReviews([]);
+    setCommunityStats(null);
+
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       setLoaded(true);
