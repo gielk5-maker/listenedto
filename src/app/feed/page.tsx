@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
 import FeedZoekbalk from "@/components/FeedZoekbalk";
 import FeedKaart from "@/components/FeedKaart";
+import ThemeApplicator from "@/components/ThemeApplicator";
 
 export default async function FeedPage() {
   const supabase = await createClient();
@@ -54,11 +55,13 @@ export default async function FeedPage() {
     { data: eigenRatingsData },
     { data: profielen },
     { data: popularRaw },
+    { data: eigenProfiel },
   ] = await Promise.all([
     supabase.from("ratings").select("*").in("user_id", gevolgdeIds).order("created_at", { ascending: false }).limit(50),
     supabase.from("ratings").select("album_name, artist_name, rating").eq("user_id", user.id),
     supabase.from("profiles").select("id, username").in("id", allIds),
     supabase.from("ratings").select("album_name, artist_name, album_image, album_url, rating").not("album_name", "is", null).not("rating", "is", null),
+    supabase.from("profiles").select("theme").eq("id", user.id).single(),
   ]);
 
   const ratingIds = feedRatings?.map((r) => r.id) ?? [];
@@ -109,6 +112,7 @@ export default async function FeedPage() {
 
   return (
     <div className="min-h-screen text-stone-50">
+      <ThemeApplicator dbTheme={eigenProfiel?.theme ?? undefined} />
       <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
         <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
           <Logo />

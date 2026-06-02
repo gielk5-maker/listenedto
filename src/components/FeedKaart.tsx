@@ -29,6 +29,7 @@ type Props = {
     moment_wanneer: string | null;
     moment_waar: string | null;
     created_at: string;
+    listened_at: string | null;
   };
   vriendUsername: string;
   eigenUserId: string;
@@ -96,7 +97,7 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
           {vriendUsername}
         </Link>
         <span className="text-stone-700 text-xs ml-auto">
-          {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+          {new Date(r.listened_at ? r.listened_at + "T00:00:00" : r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
         </span>
       </div>
 

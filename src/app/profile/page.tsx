@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
 import AlbumCover from "@/components/AlbumCover";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import ThemeApplicator from "@/components/ThemeApplicator";
 import AvatarUpload from "@/components/AvatarUpload";
 import FavorietenSlots from "@/components/FavorietenSlots";
 import LijstBeheer from "@/components/LijstBeheer";
@@ -30,7 +31,7 @@ export default async function ProfielPage() {
     supabase.from("ratings").select("*").eq("user_id", user.id),
     supabase.from("follows").select("follower_id").eq("following_id", user.id),
     supabase.from("follows").select("following_id").eq("follower_id", user.id),
-    supabase.from("profiles").select("username, avatar_url").eq("id", user.id).single(),
+    supabase.from("profiles").select("username, avatar_url, theme").eq("id", user.id).single(),
     supabase.from("favorites").select("*").eq("user_id", user.id).order("position"),
     supabase.from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("concert_reviews").select("*, concert_events(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
@@ -70,6 +71,7 @@ export default async function ProfielPage() {
 
   return (
     <div className="min-h-screen text-stone-50">
+      <ThemeApplicator dbTheme={profiel?.theme ?? undefined} />
       <header className="border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
         <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
           <Logo />
