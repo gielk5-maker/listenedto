@@ -16,19 +16,9 @@ type Result = {
 
 async function fetchCover(album: string, artist: string): Promise<string | null> {
   try {
-    const q = encodeURIComponent(`release:"${album}" artist:"${artist}"`);
-    const res = await fetch(`https://musicbrainz.org/ws/2/release/?query=${q}&limit=5&fmt=json`, {
-      headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" },
-    });
+    const res = await fetch(`/api/cover?album=${encodeURIComponent(album)}&artist=${encodeURIComponent(artist)}`);
     const data = await res.json();
-    const releases: { id: string }[] = data.releases ?? [];
-    for (const release of releases) {
-      try {
-        const coverRes = await fetch(`https://coverartarchive.org/release/${release.id}/front`, { redirect: "follow" });
-        if (coverRes.ok) return coverRes.url;
-      } catch { continue; }
-    }
-    return null;
+    return data.url ?? null;
   } catch {
     return null;
   }
@@ -89,7 +79,7 @@ function HandmatigForm({ onDone }: { onDone: () => void }) {
           <div className="flex items-center gap-3">
             {coverLoading
               ? <div className="w-14 h-14 rounded-xl bg-stone-800 flex items-center justify-center"><div className="w-4 h-4 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" /></div>
-              : preview && <img src={preview} alt="cover" className="w-14 h-14 rounded-xl object-cover" />
+              : preview && <img src={preview} alt="cover" className="w-14 h-14 rounded-xl object-cover" referrerPolicy="no-referrer" />
             }
             <p className="text-stone-500 text-xs">{coverLoading ? "Looking up cover..." : "Cover found"}</p>
           </div>

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import AlbumCover from "@/components/AlbumCover";
 
 type Result = {
   name: string;
@@ -81,7 +80,10 @@ export default function FeedZoekbalk() {
               className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-800 transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-800 flex-shrink-0">
-                <AlbumCover src={item.image} alt={item.name} width={40} height={40} className="object-cover w-full h-full" />
+                {item.image
+                  ? <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                  : <div className="w-full h-full flex items-center justify-center text-stone-600 text-lg">💿</div>
+                }
               </div>
               <div className="min-w-0">
                 <p className="text-stone-100 text-sm font-medium truncate">{item.name}</p>
