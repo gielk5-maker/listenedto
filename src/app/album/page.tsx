@@ -213,13 +213,23 @@ function AlbumPageInner() {
 
             <div>
               <label className="block text-xs text-stone-500 uppercase tracking-widest mb-1.5">Date listened</label>
-              <input
-                type="date"
-                value={listenedAt}
-                max={new Date().toISOString().slice(0, 10)}
-                onChange={e => setListenedAt(e.target.value)}
-                className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-4 py-3 text-stone-50 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
-              />
+              <div className="relative">
+                <input
+                  type="date"
+                  value={listenedAt}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setListenedAt(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-4 py-3 flex items-center justify-between pointer-events-none">
+                  <span className="text-stone-50 text-sm">
+                    {new Date(listenedAt + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                  </span>
+                  <svg className="w-4 h-4 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             <div>
