@@ -31,22 +31,26 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
 
   const isZichzelf = profiel.id === user.id;
 
-  const { data: volgRelatie } = await supabase
-    .from("follows").select("follower_id")
-    .eq("follower_id", user.id).eq("following_id", profiel.id).maybeSingle();
+  const [
+    { data: volgRelatie },
+    { data: ratingsRaw },
+    { data: volgers },
+    { data: volgend },
+    { data: favorieten },
+  ] = await Promise.all([
+    supabase.from("follows").select("follower_id").eq("follower_id", user.id).eq("following_id", profiel.id).maybeSingle(),
+    supabase.from("ratings").select("*").eq("user_id", profiel.id),
+    supabase.from("follows").select("follower_id").eq("following_id", profiel.id),
+    supabase.from("follows").select("following_id").eq("follower_id", profiel.id),
+    supabase.from("favorites").select("*").eq("user_id", profiel.id).order("position"),
+  ]);
+
   const volgtAl = !!volgRelatie;
-
-  const { data: ratings } = await supabase
-    .from("ratings").select("*").eq("user_id", profiel.id).order("created_at", { ascending: false });
-
-  const { data: volgers } = await supabase
-    .from("follows").select("follower_id").eq("following_id", profiel.id);
-
-  const { data: volgend } = await supabase
-    .from("follows").select("following_id").eq("follower_id", profiel.id);
-
-  const { data: favorieten } = await supabase
-    .from("favorites").select("*").eq("user_id", profiel.id).order("position");
+  const ratings = [...(ratingsRaw ?? [])].sort((a, b) => {
+    const aDate = a.listened_at ?? a.created_at.slice(0, 10);
+    const bDate = b.listened_at ?? b.created_at.slice(0, 10);
+    return bDate.localeCompare(aDate);
+  });
 
   const gemiddelde = ratings && ratings.length > 0
     ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
@@ -149,7 +153,7 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
                 </div>
                 <div className="flex flex-col items-end justify-between flex-shrink-0">
                   <span className="text-stone-700 text-xs">
-                    {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    {new Date(r.listened_at ? r.listened_at + "T00:00:00" : r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                   </span>
                   {(r.moment_wanneer || r.moment_waar) && (
                     <span className="text-[var(--accent)] text-xs">📍</span>

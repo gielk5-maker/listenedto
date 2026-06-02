@@ -18,30 +18,29 @@ export default async function ProfielPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: ratings } = await supabase
-    .from("ratings").select("*").eq("user_id", user.id).order("listened_at", { ascending: false }).order("created_at", { ascending: false });
+  const [
+    { data: ratingsRaw },
+    { data: volgers },
+    { data: volgend },
+    { data: profiel },
+    { data: favorieten },
+    { data: lijstenRaw },
+    { data: concertReviews },
+  ] = await Promise.all([
+    supabase.from("ratings").select("*").eq("user_id", user.id),
+    supabase.from("follows").select("follower_id").eq("following_id", user.id),
+    supabase.from("follows").select("following_id").eq("follower_id", user.id),
+    supabase.from("profiles").select("username, avatar_url").eq("id", user.id).single(),
+    supabase.from("favorites").select("*").eq("user_id", user.id).order("position"),
+    supabase.from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("concert_reviews").select("*, concert_events(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
+  ]);
 
-  const { data: volgers } = await supabase
-    .from("follows").select("follower_id").eq("following_id", user.id);
-
-  const { data: volgend } = await supabase
-    .from("follows").select("following_id").eq("follower_id", user.id);
-
-  const { data: profiel } = await supabase
-    .from("profiles").select("username, avatar_url").eq("id", user.id).single();
-
-  const { data: favorieten } = await supabase
-    .from("favorites").select("*").eq("user_id", user.id).order("position");
-
-  const { data: lijstenRaw } = await supabase
-    .from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false });
-
-  // Concerts
-  const { data: concertReviews } = await supabase
-    .from("concert_reviews")
-    .select("*, concert_events(*)")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  const ratings = [...(ratingsRaw ?? [])].sort((a, b) => {
+    const aDate = a.listened_at ?? a.created_at.slice(0, 10);
+    const bDate = b.listened_at ?? b.created_at.slice(0, 10);
+    return bDate.localeCompare(aDate);
+  });
 
   const lijsten = await Promise.all((lijstenRaw ?? []).map(async (l) => {
     const { count } = await supabase.from("list_items").select("id", { count: "exact", head: true }).eq("list_id", l.id);
@@ -210,7 +209,7 @@ export default async function ProfielPage() {
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <span className="text-stone-700 text-xs">
-                      {new Date((r.listened_at ?? r.created_at) + (r.listened_at ? "T00:00:00" : "")).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                      {new Date((r.listened_at ? r.listened_at + "T00:00:00" : r.created_at)).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                     </span>
                     {(r.moment_wanneer || r.moment_waar) && (
                       <span className="text-[var(--accent)] text-xs">📍</span>
