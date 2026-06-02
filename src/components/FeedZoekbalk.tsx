@@ -1,28 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import AlbumCover from "@/components/AlbumCover";
+
+type Result = {
+  name: string;
+  artist: string;
+  image: string | null;
+  mbid: string | null;
+  url: string;
+};
 
 export default function FeedZoekbalk() {
   const [query, setQuery] = useState("");
+  const [results, setResults] = useState<Result[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const router = useRouter();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function zoek(e: React.FormEvent) {
-    e.preventDefault();
-    if (!query.trim()) return;
-    router.push(`/zoeken?q=${encodeURIComponent(query.trim())}`);
+  useEffect(() => {
+    if (!query.trim()) { setResults([]); setOpen(false); return; }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setLoading(true);
+      const res = await fetch(`/api/zoeken?q=${encodeURIComponent(query.trim())}&type=album`);
+      const data = await res.json();
+      setResults(data);
+      setOpen(true);
+      setLoading(false);
+    }, 350);
+  }, [query]);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  function goToAlbum(item: Result) {
+    const p = new URLSearchParams({
+      name: item.name, artist: item.artist, type: "album",
+      ...(item.image ? { image: item.image } : {}),
+      ...(item.mbid ? { mbid: item.mbid } : {}),
+      ...(item.url ? { url: item.url } : {}),
+    });
     setQuery("");
+    setOpen(false);
+    router.push(`/album?${p.toString()}`);
   }
 
   return (
-    <form onSubmit={zoek} className="mb-6">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Zoek een album of artiest..."
-        className="w-full bg-stone-900 border border-stone-700/60 rounded-2xl px-4 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
-      />
-    </form>
+    <div ref={containerRef} className="relative mb-6">
+      <div className="relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => results.length > 0 && setOpen(true)}
+          placeholder="Search an album or artist..."
+          className="w-full bg-stone-900 border border-stone-700/60 rounded-2xl px-4 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
+        />
+        {loading && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2">
+            <div className="w-4 h-4 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />
+          </div>
+        )}
+      </div>
+
+      {open && results.length > 0 && (
+        <div className="absolute z-50 top-full mt-2 w-full bg-stone-900 border border-stone-700/60 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden">
+          {results.slice(0, 6).map((item, i) => (
+            <button
+              key={i}
+              onClick={() => goToAlbum(item)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-800 transition-colors text-left"
+            >
+              <div className="w-10 h-10 rounded-lg overflow-hidden bg-stone-800 flex-shrink-0">
+                <AlbumCover src={item.image} alt={item.name} width={40} height={40} className="object-cover w-full h-full" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-stone-100 text-sm font-medium truncate">{item.name}</p>
+                <p className="text-stone-500 text-xs truncate">{item.artist}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
