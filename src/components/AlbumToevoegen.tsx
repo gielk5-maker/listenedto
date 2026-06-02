@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { voegAlbumToeAanLijst } from "@/app/actions/profile";
 
 type SearchResult = {
@@ -17,7 +18,7 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
-  const [, startTransition] = useTransition();
+  const router = useRouter();
 
   async function search(q: string) {
     setQuery(q);
@@ -29,15 +30,16 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
     setSearching(false);
   }
 
-  function add(album: SearchResult) {
+  async function add(album: SearchResult) {
     const key = `${album.name}__${album.artist}`;
     setAdded(prev => [...prev, key]);
-    startTransition(() => voegAlbumToeAanLijst(listId, {
+    await voegAlbumToeAanLijst(listId, {
       album_name: album.name,
       artist_name: album.artist,
       album_image: album.image,
       album_url: album.url,
-    }));
+    });
+    router.refresh();
   }
 
   return (
