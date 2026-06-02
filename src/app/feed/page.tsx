@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/actions/auth";
+import LogoutButton from "@/components/LogoutButton";
 import FeedZoekbalk from "@/components/FeedZoekbalk";
 import FeedKaart from "@/components/FeedKaart";
 
@@ -29,7 +29,7 @@ export default async function FeedPage() {
           <nav className="flex items-center gap-5">
             <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
             <Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link>
-            <form action={logout}><button type="submit" className="text-xs text-stone-700 hover:text-stone-400 transition-colors">Log out</button></form>
+            <LogoutButton />
           </nav>
         </header>
         <main className="max-w-xl mx-auto px-5 py-8">
@@ -118,9 +118,7 @@ export default async function FeedPage() {
           <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
           <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
-          <form action={logout}>
-            <button type="submit" className="text-xs text-stone-700 hover:text-stone-400 transition-colors">Log out</button>
-          </form>
+          <LogoutButton />
         </nav>
       </header>
 

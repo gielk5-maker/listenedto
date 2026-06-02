@@ -3,7 +3,7 @@ import Sterren from "@/components/Sterren";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { logout } from "@/app/actions/auth";
+import LogoutButton from "@/components/LogoutButton";
 import AlbumCover from "@/components/AlbumCover";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import AvatarUpload from "@/components/AvatarUpload";
@@ -78,9 +78,7 @@ export default async function ProfielPage() {
         <div className="flex items-center gap-3">
           <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
           <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
-          <form action={logout}>
-            <button type="submit" className="text-sm text-stone-500 hover:text-stone-200 transition-colors">Log out</button>
-          </form>
+          <LogoutButton />
           <ThemeSwitcher />
         </div>
       </header>
