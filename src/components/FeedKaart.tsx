@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Sterren from "@/components/Sterren";
 import Link from "next/link";
 import AlbumCover from "@/components/AlbumCover";
-import { toggleLike, toggleCommentLike, plaatsComment } from "@/app/actions/sociale";
+import { toggleLike, toggleCommentLike, plaatsComment } from "@/app/actions/social";
 
 type Comment = {
   id: string;

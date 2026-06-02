@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { volg, ontvolg } from "@/app/actions/sociale";
+import { volg, ontvolg } from "@/app/actions/social";
 import Image from "next/image";
 
 
