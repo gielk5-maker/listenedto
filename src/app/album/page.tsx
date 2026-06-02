@@ -449,49 +449,62 @@ function AlbumPageInner() {
         )}
 
         {/* Community stats + reviews */}
-        {communityStats && (
-          <div className="space-y-4">
-            {/* Stats bar */}
-            <div className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-center gap-6">
-              <div>
-                <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-0.5">Avg. rating</p>
-                <p className="text-[var(--accent)] font-bold text-lg">
-                  {communityStats.avg > 0 ? `★ ${communityStats.avg}` : "—"}
-                </p>
-              </div>
-              <div className="w-px h-8 bg-stone-800" />
-              <div>
-                <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-0.5">Total listens</p>
-                <p className="text-stone-200 font-bold text-lg">{communityStats.total}</p>
-              </div>
+        <div className="space-y-4">
+          {/* Stats bar */}
+          <div className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-center gap-6">
+            <div>
+              <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-0.5">Avg. rating</p>
+              {communityStats
+                ? <p className="text-[var(--accent)] font-bold text-lg">{communityStats.avg > 0 ? `★ ${communityStats.avg}` : "—"}</p>
+                : <div className="h-6 w-10 bg-stone-800 rounded animate-pulse mt-0.5" />
+              }
             </div>
+            <div className="w-px h-8 bg-stone-800" />
+            <div>
+              <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-0.5">Total listens</p>
+              {communityStats
+                ? <p className="text-stone-200 font-bold text-lg">{communityStats.total}</p>
+                : <div className="h-6 w-8 bg-stone-800 rounded animate-pulse mt-0.5" />
+              }
+            </div>
+          </div>
 
-            {/* Reviews from others */}
-            {communityReviews.length > 0 && (
-              <div>
-                <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-3">Reviews</h2>
-                <div className="space-y-2">
-                  {communityReviews.map((r, i) => (
-                    <div key={i} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <Link href={`/user/${r.username}`} className="text-sm font-semibold text-stone-300 hover:text-white transition-colors">
-                          {r.username}
-                        </Link>
-                        <div className="flex items-center gap-2">
-                          {r.rating && <SmallStars rating={r.rating} />}
-                          <span className="text-stone-700 text-[10px]">
-                            {new Date(r.listened_at ? r.listened_at + "T00:00:00" : r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                          </span>
-                        </div>
-                      </div>
-                      <p className="text-stone-400 text-sm italic">"{r.review}"</p>
-                    </div>
-                  ))}
-                </div>
+          {/* Reviews from others */}
+          <div>
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-3">Reviews</h2>
+            {!loaded ? (
+              <div className="space-y-2">
+                {[1, 2].map(i => (
+                  <div key={i} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 space-y-2">
+                    <div className="h-3 w-24 bg-stone-800 rounded animate-pulse" />
+                    <div className="h-3 w-full bg-stone-800 rounded animate-pulse" />
+                  </div>
+                ))}
               </div>
+            ) : communityReviews.length > 0 ? (
+              <div className="space-y-2">
+                {communityReviews.map((r, i) => (
+                  <div key={i} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <Link href={`/user/${r.username}`} className="text-sm font-semibold text-stone-300 hover:text-white transition-colors">
+                        {r.username}
+                      </Link>
+                      <div className="flex items-center gap-2">
+                        {r.rating && <SmallStars rating={r.rating} />}
+                        <span className="text-stone-700 text-[10px]">
+                          {new Date(r.listened_at ? r.listened_at + "T00:00:00" : r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-stone-400 text-sm italic">"{r.review}"</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-stone-700 text-sm">No reviews yet.</p>
             )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
