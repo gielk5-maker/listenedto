@@ -111,7 +111,7 @@ export default async function FeedPage() {
     .filter((a) => a.count >= 1)
     .map((a) => ({ ...a, avg: Math.round((a.total / a.count) * 10) / 10 }))
     .sort((a, b) => b.avg - a.avg || b.count - a.count)
-    .slice(0, 10);
+    .slice(0, 5);
 
   return (
     <div className="min-h-screen text-stone-50">
@@ -202,6 +202,7 @@ export default async function FeedPage() {
                     <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg} avg.</p>
                   </Link>
                 ))}
+              <Link href="/topalbums" className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors mt-1 block">See more →</Link>
               </div>
 
               {/* Desktop: verticale lijst */}
@@ -226,6 +227,7 @@ export default async function FeedPage() {
                     </div>
                   </Link>
                 ))}
+                <Link href="/topalbums" className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors mt-1 px-2">See more →</Link>
               </div>
             </div>
           )}
