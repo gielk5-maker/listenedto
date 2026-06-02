@@ -22,6 +22,9 @@ export default function FeedZoekbalk() {
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); setOpen(false); return; }
+    // Clear old results immediately so user can't click a stale result
+    setResults([]);
+    setOpen(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
