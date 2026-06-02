@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const spotifyType = type === "track" ? "track" : "album";
 
   const res = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=50`,
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=20`,
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
   const data = await res.json();
