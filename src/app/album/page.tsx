@@ -235,7 +235,6 @@ function AlbumPageInner() {
 
       const existing = ownResult.data ?? [];
       setListens(existing);
-      if (existing.length === 0) setShowForm(true);
 
       // Community stats
       const allRatings = communityResult.data ?? [];
@@ -346,10 +345,18 @@ function AlbumPageInner() {
           <div className="w-32 h-32 flex-shrink-0 rounded-2xl overflow-hidden bg-stone-800 shadow-2xl shadow-black/60">
             <AlbumCover src={image} alt={name} width={128} height={128} className="object-cover w-full h-full" />
           </div>
-          <div className="flex flex-col justify-end pb-1">
-            <p className="text-stone-500 text-xs uppercase tracking-widest mb-1.5">{type === "track" ? "Track" : "Album"}</p>
+          <div className="flex flex-col justify-end pb-1 gap-2">
+            <p className="text-stone-500 text-xs uppercase tracking-widest">{type === "track" ? "Track" : "Album"}</p>
             <h1 className="text-2xl font-bold leading-tight text-stone-50">{name}</h1>
-            <p className="text-stone-400 mt-1.5 font-medium">{artist}</p>
+            <p className="text-stone-400 font-medium">{artist}</p>
+            {loaded && !showForm && (
+              <button
+                onClick={startNewListen}
+                className="mt-1 self-start bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-xl px-4 py-2 text-sm transition-opacity"
+              >
+                {listens.length > 0 ? "+ Log another listen" : "Log this album"}
+              </button>
+            )}
           </div>
         </div>
 
@@ -416,11 +423,6 @@ function AlbumPageInner() {
               <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold">
                 {listens.length} {listens.length === 1 ? "listen" : "listens"}
               </h2>
-              {!showForm && (
-                <button onClick={startNewListen} className="text-xs text-[var(--accent)] font-medium hover:opacity-80 transition-opacity">
-                  + Log another listen
-                </button>
-              )}
             </div>
             <div className="space-y-2">
               {listens.map((listen) => (
