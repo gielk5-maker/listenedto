@@ -123,7 +123,7 @@ export default function LoginPage() {
 
         <p className="text-center text-stone-600 text-sm mt-6">
           No account yet?{" "}
-          <Link href="/registreer" className="text-[var(--accent)]">Sign up</Link>
+          <Link href="/register" className="text-[var(--accent)]">Sign up</Link>
         </p>
       </div>
     </div>

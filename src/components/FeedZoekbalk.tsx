@@ -26,7 +26,7 @@ export default function FeedZoekbalk() {
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/zoeken?q=${encodeURIComponent(query.trim())}&type=album`);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&type=album`);
         const data = await res.json();
         if (Array.isArray(data)) {
           setResults(data);

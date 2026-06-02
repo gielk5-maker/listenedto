@@ -18,11 +18,11 @@ export default async function InstellingenPage() {
   return (
     <div className="min-h-screen text-stone-50">
       <header className="border-b border-stone-800/60 px-5 py-3 flex items-center gap-3">
-        <Link href="/profiel" className="flex items-center gap-2 text-base font-bold">
+        <Link href="/profile" className="flex items-center gap-2 text-base font-bold">
           <Logo />
           ListenedTo
         </Link>
-        <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">← Profile</Link>
+        <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">← Profile</Link>
       </header>
 
       <main className="max-w-2xl mx-auto px-5 py-10 space-y-10">

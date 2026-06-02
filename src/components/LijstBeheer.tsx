@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { maakLijst, verwijderLijst } from "@/app/actions/profiel";
+import { maakLijst, verwijderLijst } from "@/app/actions/profile";
 import { useRouter } from "next/navigation";
 
 type Lijst = {
@@ -33,7 +33,7 @@ export default function LijstBeheer({ lijsten: initLijsten, bewerkbaar }: Props)
       setNieuwOpen(false);
       setNaam("");
       setBeschrijving("");
-      router.push(`/lijst/${result.id}`);
+      router.push(`/list/${result.id}`);
     }
   }
 
@@ -73,7 +73,7 @@ export default function LijstBeheer({ lijsten: initLijsten, bewerkbaar }: Props)
           {lijsten.map((lijst) => (
             <div key={lijst.id} className="group flex items-center gap-3">
               <Link
-                href={`/lijst/${lijst.id}`}
+                href={`/list/${lijst.id}`}
                 className="flex-1 flex items-center gap-3 bg-stone-900 hover:bg-stone-800/80 rounded-2xl px-4 py-3 transition-colors border border-stone-800/40 hover:border-stone-700"
               >
                 <span className="text-lg">📋</span>

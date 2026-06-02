@@ -22,7 +22,7 @@ export default function GebruikersPage() {
     if (!query.trim()) return;
     setLoading(true);
     setSearched(true);
-    const res = await fetch(`/api/gebruikers?q=${encodeURIComponent(query)}`);
+    const res = await fetch(`/api/users?q=${encodeURIComponent(query)}`);
     const data = await res.json();
     setResults(data);
     setLoading(false);
@@ -36,8 +36,8 @@ export default function GebruikersPage() {
           ListenedTo
         </Link>
         <div className="flex items-center gap-4">
-          <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>
+          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>
         </div>
       </header>
 
@@ -70,7 +70,7 @@ export default function GebruikersPage() {
           {results.map((g) => (
             <button
               key={g.id}
-              onClick={() => router.push(`/gebruiker/${g.username}`)}
+              onClick={() => router.push(`/user/${g.username}`)}
               className="w-full flex items-center gap-3 bg-stone-900 hover:bg-stone-800/80 rounded-2xl px-4 py-3.5 transition-colors text-left border border-stone-800/40 hover:border-stone-700"
             >
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-sm font-bold text-[var(--accent-text)] flex-shrink-0 shadow shadow-black/25">

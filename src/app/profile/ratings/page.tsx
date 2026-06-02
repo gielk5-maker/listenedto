@@ -26,11 +26,11 @@ export default async function AlleRatingsPage() {
   return (
     <div className="min-h-screen text-stone-50">
       <header className="border-b border-stone-800/60 px-5 py-3 flex items-center gap-3">
-        <Link href="/profiel" className="flex items-center gap-2 text-base font-bold">
+        <Link href="/profile" className="flex items-center gap-2 text-base font-bold">
           <Logo />
           ListenedTo
         </Link>
-        <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">
+        <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">
           ← Profile
         </Link>
       </header>
@@ -44,7 +44,7 @@ export default async function AlleRatingsPage() {
         {!ratings || ratings.length === 0 ? (
           <div className="text-center py-16 bg-stone-900/60 rounded-3xl border border-stone-800">
             <p className="text-stone-600 mb-4">No ratings yet.</p>
-            <Link href="/zoeken" className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-opacity inline-block">
+            <Link href="/search" className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-opacity inline-block">
               Search albums
             </Link>
           </div>

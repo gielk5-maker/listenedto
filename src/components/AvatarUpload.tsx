@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { updateAvatarUrl } from "@/app/actions/profiel";
+import { updateAvatarUrl } from "@/app/actions/profile";
 import Image from "next/image";
 
 type Props = {

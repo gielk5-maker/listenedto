@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { voegAlbumToeAanLijst } from "@/app/actions/profiel";
+import { voegAlbumToeAanLijst } from "@/app/actions/profile";
 
 type SearchResult = {
   name: string;
@@ -23,7 +23,7 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
     setQuery(q);
     if (!q.trim()) { setResults([]); return; }
     setSearching(true);
-    const res = await fetch(`/api/zoeken?q=${encodeURIComponent(q)}&type=album`);
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album`);
     const data = await res.json();
     setResults(data);
     setSearching(false);

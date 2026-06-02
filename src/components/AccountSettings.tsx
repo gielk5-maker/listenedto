@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { wijzigUsername, wijzigWachtwoord } from "@/app/actions/instellingen";
+import { wijzigUsername, wijzigWachtwoord } from "@/app/actions/settings";
 
 export default function AccountSettings({ username }: { username: string }) {
   const [newUsername, setNewUsername] = useState(username);

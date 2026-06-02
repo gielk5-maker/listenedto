@@ -27,8 +27,8 @@ export default async function FeedPage() {
             ListenedTo
           </Link>
           <nav className="flex items-center gap-5">
-            <Link href="/gebruikers" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
-            <Link href="/profiel" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link>
+            <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
+            <Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link>
             <form action={logout}><button type="submit" className="text-xs text-stone-700 hover:text-stone-400 transition-colors">Log out</button></form>
           </nav>
         </header>
@@ -38,7 +38,7 @@ export default async function FeedPage() {
             <p className="text-3xl mb-3">👥</p>
             <p className="text-stone-300 font-semibold mb-1">You're not following anyone yet</p>
             <p className="text-stone-600 text-sm mb-6">Find people to see their ratings here.</p>
-            <Link href="/gebruikers" className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-colors inline-block">
+            <Link href="/users" className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-colors inline-block">
               Find people
             </Link>
           </div>
@@ -115,9 +115,9 @@ export default async function FeedPage() {
           ListenedTo
         </Link>
         <nav className="flex items-center gap-5">
-          <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/gebruikers" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
-          <Link href="/profiel" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
+          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
+          <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
           <form action={logout}>
             <button type="submit" className="text-xs text-stone-700 hover:text-stone-400 transition-colors">Log out</button>
           </form>

@@ -282,7 +282,7 @@ function AlbumPageInner() {
           <Logo />
           ListenedTo
         </Link>
-        <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Back</Link>
+        <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Back</Link>
       </header>
 
       <main className="max-w-xl mx-auto px-5 py-10 space-y-6">

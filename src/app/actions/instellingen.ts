@@ -24,8 +24,8 @@ export async function wijzigUsername(username: string) {
   // Also update user metadata
   await supabase.auth.updateUser({ data: { username: trimmed } });
 
-  revalidatePath("/profiel");
-  revalidatePath("/instellingen");
+  revalidatePath("/profile");
+  revalidatePath("/settings");
   return { success: true };
 }
 

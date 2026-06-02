@@ -88,11 +88,11 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
     <div className="bg-stone-900 rounded-3xl overflow-hidden border border-stone-800/50">
       {/* Who */}
       <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
-        <Link href={`/gebruiker/${vriendUsername}`}
+        <Link href={`/user/${vriendUsername}`}
           className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-xs font-bold text-[var(--accent-text)] hover:opacity-80 transition-opacity flex-shrink-0 shadow shadow-black/25">
           {vriendUsername[0]?.toUpperCase()}
         </Link>
-        <Link href={`/gebruiker/${vriendUsername}`} className="text-sm font-semibold hover:text-[var(--accent)] transition-colors">
+        <Link href={`/user/${vriendUsername}`} className="text-sm font-semibold hover:text-[var(--accent)] transition-colors">
           {vriendUsername}
         </Link>
         <span className="text-stone-700 text-xs ml-auto">
@@ -165,13 +165,13 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
             <div className="px-4 pt-3 space-y-3">
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2.5">
-                  <Link href={`/gebruiker/${c.username}`}
+                  <Link href={`/user/${c.username}`}
                     className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-[10px] font-bold text-[var(--accent-text)] flex-shrink-0 mt-0.5">
                     {c.username[0]?.toUpperCase()}
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
-                      <Link href={`/gebruiker/${c.username}`} className="text-xs font-semibold text-stone-300 hover:text-[var(--accent)] transition-colors">
+                      <Link href={`/user/${c.username}`} className="text-xs font-semibold text-stone-300 hover:text-[var(--accent)] transition-colors">
                         {c.username}
                       </Link>
                       <span className="text-stone-700 text-[10px]">

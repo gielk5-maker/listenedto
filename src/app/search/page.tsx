@@ -113,7 +113,7 @@ function ZoekenInner() {
     if (!q.trim()) return;
     setLoading(true);
     setSearched(true);
-    const res = await fetch(`/api/zoeken?q=${encodeURIComponent(q)}&type=album`);
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album`);
     const data = await res.json();
     setResults(data);
     setLoading(false);
@@ -157,8 +157,8 @@ function ZoekenInner() {
           />
         </form>
         <nav className="flex items-center gap-4 ml-auto shrink-0">
-          <Link href="/gebruikers" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
-          <Link href="/profiel" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link>
+          <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
+          <Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link>
         </nav>
       </header>
 

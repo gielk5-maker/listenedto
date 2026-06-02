@@ -43,7 +43,7 @@ export async function logConcert(data: {
 
   if (reviewError) return { error: reviewError.message };
 
-  revalidatePath("/profiel");
+  revalidatePath("/profile");
   revalidatePath(`/concert/${event.id}`);
   return { id: event.id };
 }
@@ -58,6 +58,6 @@ export async function verwijderConcertReview(concertId: string) {
     .eq("user_id", user.id)
     .eq("concert_id", concertId);
 
-  revalidatePath("/profiel");
+  revalidatePath("/profile");
   revalidatePath(`/concert/${concertId}`);
 }

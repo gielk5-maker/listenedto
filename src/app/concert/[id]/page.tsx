@@ -40,7 +40,7 @@ export default async function ConcertPage({ params }: { params: Promise<{ id: st
           <Logo />
           ListenedTo
         </Link>
-        <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>
+        <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>
       </header>
 
       <main className="max-w-2xl mx-auto px-5 py-10">
@@ -64,12 +64,12 @@ export default async function ConcertPage({ params }: { params: Promise<{ id: st
 
             <div className="flex flex-col gap-2 flex-shrink-0">
               {eigenReview ? (
-                <Link href={`/concert/loggen?artist=${encodeURIComponent(concert.artist_name)}`}
+                <Link href={`/concert/log?artist=${encodeURIComponent(concert.artist_name)}`}
                   className="bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-300 font-semibold rounded-2xl px-5 py-2.5 text-sm transition-colors">
                   Edit review
                 </Link>
               ) : (
-                <Link href={`/concert/loggen?artist=${encodeURIComponent(concert.artist_name)}`}
+                <Link href={`/concert/log?artist=${encodeURIComponent(concert.artist_name)}`}
                   className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-5 py-2.5 text-sm transition-opacity">
                   + Log this concert
                 </Link>
@@ -91,7 +91,7 @@ export default async function ConcertPage({ params }: { params: Promise<{ id: st
               return (
                 <div key={r.id} className="bg-stone-900 rounded-3xl p-5 border border-stone-800/50">
                   <div className="flex items-center gap-3 mb-3">
-                    <Link href={`/gebruiker/${profiel?.username}`}
+                    <Link href={`/user/${profiel?.username}`}
                       className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0">
                       {profiel?.avatar_url ? (
                         <Image src={profiel.avatar_url} alt={profiel.username} width={36} height={36} className="object-cover w-full h-full" />
@@ -102,7 +102,7 @@ export default async function ConcertPage({ params }: { params: Promise<{ id: st
                       )}
                     </Link>
                     <div className="flex-1">
-                      <Link href={`/gebruiker/${profiel?.username}`} className="font-semibold text-sm hover:text-[var(--accent)] transition-colors">
+                      <Link href={`/user/${profiel?.username}`} className="font-semibold text-sm hover:text-[var(--accent)] transition-colors">
                         {profiel?.username}
                       </Link>
                       <p className="text-stone-700 text-xs">

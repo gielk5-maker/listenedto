@@ -76,8 +76,8 @@ export default async function ProfielPage() {
           ListenedTo
         </Link>
         <div className="flex items-center gap-3">
-          <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/gebruikers" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
+          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <form action={logout}>
             <button type="submit" className="text-sm text-stone-500 hover:text-stone-200 transition-colors">Log out</button>
           </form>
@@ -94,8 +94,8 @@ export default async function ProfielPage() {
             <h1 className="text-2xl font-bold text-stone-50">{username}</h1>
             <div className="flex gap-4 mt-1.5 text-sm text-stone-500 flex-wrap">
               <span className="text-stone-300 font-medium">{aantalRatings} ratings</span>
-              <Link href="/profiel/volgers" className="hover:text-stone-100 transition-colors">{volgers?.length ?? 0} followers</Link>
-              <Link href="/profiel/volgend" className="hover:text-stone-100 transition-colors">{volgend?.length ?? 0} following</Link>
+              <Link href="/profile/followers" className="hover:text-stone-100 transition-colors">{volgers?.length ?? 0} followers</Link>
+              <Link href="/profile/following" className="hover:text-stone-100 transition-colors">{volgend?.length ?? 0} following</Link>
               {gemiddelde && <span className="text-[var(--accent)] font-medium">⌀ {gemiddelde} ★</span>}
             </div>
           </div>
@@ -142,12 +142,12 @@ export default async function ProfielPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold">Concerts</h2>
-            <Link href="/concert/loggen" className="text-xs text-[var(--accent)] font-medium">+ Log concert</Link>
+            <Link href="/concert/log" className="text-xs text-[var(--accent)] font-medium">+ Log concert</Link>
           </div>
           {!concertReviews || concertReviews.length === 0 ? (
             <div className="text-center py-10 bg-stone-900/60 rounded-3xl border border-stone-800">
               <p className="text-stone-600 text-sm mb-3">No concerts logged yet.</p>
-              <Link href="/concert/loggen" className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-5 py-2.5 text-sm transition-opacity inline-block">
+              <Link href="/concert/log" className="bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-2xl px-5 py-2.5 text-sm transition-opacity inline-block">
                 Log your first concert
               </Link>
             </div>
@@ -181,13 +181,13 @@ export default async function ProfielPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold">Ratings</h2>
-            <Link href="/zoeken" className="text-xs text-[var(--accent)] font-medium">+ Add album</Link>
+            <Link href="/search" className="text-xs text-[var(--accent)] font-medium">+ Add album</Link>
           </div>
 
           {aantalRatings === 0 ? (
             <div className="text-center py-16 bg-stone-900/60 rounded-3xl border border-stone-800">
               <p className="text-stone-600 mb-4">You haven't rated any albums yet.</p>
-              <Link href="/zoeken" className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-colors inline-block">
+              <Link href="/search" className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] font-bold rounded-2xl px-6 py-3 transition-colors inline-block">
                 Search albums
               </Link>
             </div>
@@ -219,7 +219,7 @@ export default async function ProfielPage() {
               ))}
               {aantalRatings > 3 && (
                 <Link
-                  href="/profiel/ratings"
+                  href="/profile/ratings"
                   className="block w-full text-center py-3 rounded-2xl border border-stone-800 text-stone-500 hover:text-stone-200 hover:border-stone-600 text-sm transition-colors"
                 >
                   See all {aantalRatings} ratings

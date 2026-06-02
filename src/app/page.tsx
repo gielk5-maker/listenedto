@@ -29,7 +29,7 @@ export default function HomePage() {
         </p>
         <div className="flex gap-3 justify-center">
           <Link
-            href="/registreer"
+            href="/register"
             className="bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-[var(--accent-text)] font-bold rounded-2xl px-7 py-3 transition-colors shadow-lg shadow-black/25"
           >
             Get started

@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function ThemeSwitcher() {
   return (
     <Link
-      href="/instellingen"
+      href="/settings"
       className="w-9 h-9 rounded-xl bg-stone-800 hover:bg-stone-700 border border-stone-700 flex items-center justify-center text-stone-400 hover:text-stone-100 transition-colors"
       title="Settings"
     >

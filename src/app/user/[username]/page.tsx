@@ -23,7 +23,7 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
       <div className="min-h-screen text-stone-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-stone-600 mb-4">User not found.</p>
-          <Link href="/gebruikers" className="text-[var(--accent)] text-sm">← Back</Link>
+          <Link href="/users" className="text-[var(--accent)] text-sm">← Back</Link>
         </div>
       </div>
     );
@@ -64,8 +64,8 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
           ListenedTo
         </Link>
         <nav className="flex items-center gap-5">
-          <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>
+          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>
         </nav>
       </header>
 

@@ -13,7 +13,7 @@ export default function Header({ username }: { username?: string }) {
   function zoek(e: React.FormEvent) {
     e.preventDefault();
     if (!query.trim()) return;
-    router.push(`/zoeken?q=${encodeURIComponent(query.trim())}`);
+    router.push(`/search?q=${encodeURIComponent(query.trim())}`);
     setQuery("");
   }
 
@@ -37,16 +37,16 @@ export default function Header({ username }: { username?: string }) {
 
         <nav className="flex items-center gap-4 ml-auto shrink-0">
           <Link
-            href="/gebruikers"
+            href="/users"
             className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block"
           >
             Mensen
           </Link>
           {username && (
             <Link
-              href="/profiel"
+              href="/profile"
               className={`text-sm font-medium transition-colors ${
-                pathname === "/profiel" ? "text-[var(--accent)]" : "text-stone-400 hover:text-stone-100"
+                pathname === "/profile" ? "text-[var(--accent)]" : "text-stone-400 hover:text-stone-100"
               }`}
             >
               {username}

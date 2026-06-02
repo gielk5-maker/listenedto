@@ -65,7 +65,7 @@ function LoggenInner() {
           <Logo />
           ListenedTo
         </Link>
-        <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>
+        <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>
       </header>
 
       <main className="max-w-xl mx-auto px-5 py-10">

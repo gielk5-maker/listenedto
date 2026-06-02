@@ -20,11 +20,11 @@ export default async function VolgendPagina() {
   return (
     <div className="min-h-screen text-stone-50">
       <header className="border-b border-stone-800/60 px-5 py-3 flex items-center gap-3">
-        <Link href="/profiel" className="flex items-center gap-2 text-base font-bold">
+        <Link href="/profile" className="flex items-center gap-2 text-base font-bold">
           <Logo />
           ListenedTo
         </Link>
-        <Link href="/profiel" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">← Profile</Link>
+        <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">← Profile</Link>
       </header>
 
       <main className="max-w-xl mx-auto px-5 py-8">
@@ -35,7 +35,7 @@ export default async function VolgendPagina() {
         ) : (
           <div className="space-y-2">
             {profielen?.map((p) => (
-              <Link key={p.id} href={`/gebruiker/${p.username}`}
+              <Link key={p.id} href={`/user/${p.username}`}
                 className="flex items-center gap-3 bg-stone-900 hover:bg-stone-800/80 rounded-2xl px-4 py-3.5 transition-colors border border-stone-800/40 hover:border-stone-700">
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-sm font-bold text-[var(--accent-text)] flex-shrink-0 shadow shadow-black/20">
                   {p.username[0].toUpperCase()}

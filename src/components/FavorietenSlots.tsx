@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { slaFavorietOp, verwijderFavoriet } from "@/app/actions/profiel";
+import { slaFavorietOp, verwijderFavoriet } from "@/app/actions/profile";
 
 type Favoriet = {
   position: number;
@@ -40,7 +40,7 @@ export default function FavorietenSlots({ favorieten, bewerkbaar }: Props) {
     setQuery(q);
     if (!q.trim()) { setResults([]); return; }
     setSearching(true);
-    const res = await fetch(`/api/zoeken?q=${encodeURIComponent(q)}&type=album`);
+    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album`);
     const data = await res.json();
     setResults(data);
     setSearching(false);
