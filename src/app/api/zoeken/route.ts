@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   const spotifyType = type === "track" ? "track" : "album";
 
   const res = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
+    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=50`,
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
   const data = await res.json();
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         url: (t.external_urls as Record<string, string>)?.spotify ?? null,
       }));
 
-    return NextResponse.json(dedup(mapped).slice(0, 12));
+    return NextResponse.json(dedup(mapped).slice(0, 20));
   } else {
     const albums = data.albums?.items ?? [];
     const mapped = albums
@@ -66,6 +66,6 @@ export async function GET(request: NextRequest) {
         url: (a.external_urls as Record<string, string>)?.spotify ?? null,
       }));
 
-    return NextResponse.json(dedup(mapped).slice(0, 12));
+    return NextResponse.json(dedup(mapped).slice(0, 20));
   }
 }

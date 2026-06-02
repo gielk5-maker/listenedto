@@ -74,7 +74,7 @@ export default function FeedZoekbalk() {
 
       {open && results.length > 0 && (
         <div className="absolute z-50 top-full mt-2 w-full bg-stone-900 border border-stone-700/60 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden">
-          {results.slice(0, 6).map((item, i) => (
+          {results.slice(0, 8).map((item, i) => (
             <button
               key={i}
               onClick={() => goToAlbum(item)}
