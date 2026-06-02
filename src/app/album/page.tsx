@@ -202,7 +202,8 @@ function AlbumPageInner() {
         .eq("user_id", user.id)
         .eq("album_name", name)
         .eq("artist_name", artist)
-        .order("listened_at", { ascending: true, nullsFirst: false });
+        .order("listened_at", { ascending: true })
+        .order("created_at", { ascending: true });
       const existing = data ?? [];
       setListens(existing);
       if (existing.length === 0) setShowForm(true);

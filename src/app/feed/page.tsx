@@ -108,7 +108,7 @@ export default async function FeedPage() {
     ratingMap[key].count++;
   });
   const popularAlbums = Object.values(ratingMap)
-    .filter((a) => a.count >= 2)
+    .filter((a) => a.count >= 1)
     .map((a) => ({ ...a, avg: Math.round((a.total / a.count) * 10) / 10 }))
     .sort((a, b) => b.avg - a.avg || b.count - a.count)
     .slice(0, 10);
