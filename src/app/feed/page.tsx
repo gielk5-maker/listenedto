@@ -47,19 +47,21 @@ export default async function FeedPage() {
     );
   }
 
-  const { data: feedRatings } = await supabase
-    .from("ratings")
-    .select("*")
-    .in("user_id", gevolgdeIds)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const allIds = [user.id, ...gevolgdeIds];
+
+  const [
+    { data: feedRatings },
+    { data: eigenRatingsData },
+    { data: profielen },
+    { data: popularRaw },
+  ] = await Promise.all([
+    supabase.from("ratings").select("*").in("user_id", gevolgdeIds).order("created_at", { ascending: false }).limit(50),
+    supabase.from("ratings").select("album_name, artist_name, rating").eq("user_id", user.id),
+    supabase.from("profiles").select("id, username").in("id", allIds),
+    supabase.from("ratings").select("album_name, artist_name, album_image, album_url, rating").not("album_name", "is", null).not("rating", "is", null),
+  ]);
 
   const ratingIds = feedRatings?.map((r) => r.id) ?? [];
-
-  const { data: eigenRatingsData } = await supabase
-    .from("ratings")
-    .select("album_name, artist_name, rating")
-    .eq("user_id", user.id);
 
   const eigenRatingMap: Record<string, number> = {};
   eigenRatingsData?.forEach((r) => {
@@ -67,38 +69,30 @@ export default async function FeedPage() {
     eigenRatingMap[key] = r.rating;
   });
 
-  const allIds = [user.id, ...gevolgdeIds];
-  const { data: profielen } = await supabase
-    .from("profiles").select("id, username").in("id", allIds);
   const profielMap: Record<string, string> = {};
   profielen?.forEach((p) => { profielMap[p.id] = p.username; });
   profielMap[user.id] = profielMap[user.id] ?? eigenUsername;
 
-  const { data: allLikes } = ratingIds.length > 0
-    ? await supabase.from("likes").select("id, user_id, rating_id").in("rating_id", ratingIds)
-    : { data: [] };
-
-  const { data: allComments } = ratingIds.length > 0
-    ? await supabase.from("comments").select("id, user_id, rating_id, content, created_at").in("rating_id", ratingIds).order("created_at", { ascending: true })
-    : { data: [] };
+  const [
+    { data: allLikes },
+    { data: allComments },
+  ] = await Promise.all([
+    ratingIds.length > 0 ? supabase.from("likes").select("id, user_id, rating_id").in("rating_id", ratingIds) : Promise.resolve({ data: [] }),
+    ratingIds.length > 0 ? supabase.from("comments").select("id, user_id, rating_id, content, created_at").in("rating_id", ratingIds).order("created_at", { ascending: true }) : Promise.resolve({ data: [] }),
+  ]);
 
   const commentIds = allComments?.map((c) => c.id) ?? [];
-
-  const { data: allCommentLikes } = commentIds.length > 0
-    ? await supabase.from("comment_likes").select("id, user_id, comment_id").in("comment_id", commentIds)
-    : { data: [] };
-
   const commenterIds = [...new Set(allComments?.map((c) => c.user_id) ?? [])];
-  const { data: commenterProfielen } = commenterIds.length > 0
-    ? await supabase.from("profiles").select("id, username").in("id", commenterIds)
-    : { data: [] };
-  commenterProfielen?.forEach((p) => { profielMap[p.id] = p.username; });
 
-  const { data: popularRaw } = await supabase
-    .from("ratings")
-    .select("album_name, artist_name, album_image, album_url, rating")
-    .not("album_name", "is", null)
-    .not("rating", "is", null);
+  const [
+    { data: allCommentLikes },
+    { data: commenterProfielen },
+  ] = await Promise.all([
+    commentIds.length > 0 ? supabase.from("comment_likes").select("id, user_id, comment_id").in("comment_id", commentIds) : Promise.resolve({ data: [] }),
+    commenterIds.length > 0 ? supabase.from("profiles").select("id, username").in("id", commenterIds) : Promise.resolve({ data: [] }),
+  ]);
+
+  commenterProfielen?.forEach((p) => { profielMap[p.id] = p.username; });
 
   const ratingMap: Record<string, { album_name: string; artist_name: string; album_image: string | null; album_url: string | null; total: number; count: number }> = {};
   popularRaw?.forEach((r) => {
