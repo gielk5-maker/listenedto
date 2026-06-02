@@ -18,6 +18,7 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   async function search(q: string) {
@@ -33,13 +34,18 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
   async function add(album: SearchResult) {
     const key = `${album.name}__${album.artist}`;
     setAdded(prev => [...prev, key]);
-    await voegAlbumToeAanLijst(listId, {
+    const result = await voegAlbumToeAanLijst(listId, {
       album_name: album.name,
       artist_name: album.artist,
       album_image: album.image,
       album_url: album.url,
     });
-    router.refresh();
+    if (result?.error) {
+      setError(result.error);
+      setAdded(prev => prev.filter(k => k !== key));
+    } else {
+      router.refresh();
+    }
   }
 
   return (
@@ -66,6 +72,7 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
               placeholder="Search an album or artist..."
               className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-3 py-2 text-sm text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors mb-3"
             />
+            {error && <p className="text-red-400 text-xs mb-2 bg-red-950/30 border border-red-900/50 rounded-xl px-3 py-2">{error}</p>}
             {searching && (
               <div className="flex justify-center py-4">
                 <div className="w-5 h-5 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />

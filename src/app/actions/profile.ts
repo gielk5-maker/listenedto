@@ -67,20 +67,23 @@ export async function voegAlbumToeAanLijst(listId: string, album: {
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { error: "Not logged in" };
 
   const { data: items } = await supabase.from("list_items")
     .select("position").eq("list_id", listId).order("position", { ascending: false }).limit(1);
 
   const nextPos = (items?.[0]?.position ?? -1) + 1;
 
-  await supabase.from("list_items").insert({
+  const { error } = await supabase.from("list_items").insert({
     list_id: listId,
     ...album,
     position: nextPos,
   });
 
+  if (error) return { error: error.message };
+
   revalidatePath(`/list/${listId}`);
+  return { success: true };
 }
 
 export async function verwijderAlbumUitLijst(itemId: string, listId: string) {
