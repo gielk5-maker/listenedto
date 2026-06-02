@@ -121,20 +121,35 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   let popularCommentLikes: { id: string; user_id: string; comment_id: string }[] = [];
 
   if (activeTab === "popular") {
-    const { data: popLikeCounts } = await supabase
-      .from("likes")
-      .select("rating_id")
-      .limit(500);
+    // Fetch recent ratings with reviews (last 90 days) + their like counts
+    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentRatings } = await supabase
+      .from("ratings")
+      .select("*")
+      .not("review", "is", null)
+      .gte("created_at", since)
+      .order("created_at", { ascending: false })
+      .limit(200);
+
+    const recentIds = recentRatings?.map(r => r.id) ?? [];
+    const { data: popLikeCounts } = recentIds.length > 0
+      ? await supabase.from("likes").select("rating_id").in("rating_id", recentIds)
+      : { data: [] };
 
     const likeCountMap: Record<string, number> = {};
     popLikeCounts?.forEach(l => { likeCountMap[l.rating_id] = (likeCountMap[l.rating_id] ?? 0) + 1; });
-    const topRatingIds = Object.entries(likeCountMap).sort((a, b) => b[1] - a[1]).slice(0, 50).map(([id]) => id);
 
-    const { data: popRatings } = topRatingIds.length > 0
-      ? await supabase.from("ratings").select("*").in("id", topRatingIds).not("review", "is", null)
-      : { data: [] };
-
-    popularFeedRatings = (popRatings ?? []).sort((a, b) => (likeCountMap[b.id] ?? 0) - (likeCountMap[a.id] ?? 0));
+    // Score = likes / (ageInHours + 2)^1.5  — balances recency with popularity
+    const now = Date.now();
+    popularFeedRatings = (recentRatings ?? [])
+      .map(r => {
+        const ageHours = (now - new Date(r.created_at).getTime()) / 3600000;
+        const likes = likeCountMap[r.id] ?? 0;
+        const score = (likes + 0.1) / Math.pow(ageHours + 2, 1.5);
+        return { ...r, _score: score };
+      })
+      .sort((a, b) => b._score - a._score)
+      .slice(0, 50);
 
     const popUserIds = [...new Set(popularFeedRatings?.map(r => r.user_id) ?? [])];
     const { data: popProfielen } = popUserIds.length > 0
