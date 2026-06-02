@@ -199,7 +199,7 @@ export default async function FeedPage() {
                     </div>
                     <p className="text-stone-200 text-[11px] font-semibold truncate leading-tight">{album.album_name}</p>
                     <p className="text-stone-600 text-[10px] truncate mt-0.5">{album.artist_name}</p>
-                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg}</p>
+                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg} avg.</p>
                   </Link>
                 ))}
               </div>
@@ -222,7 +222,7 @@ export default async function FeedPage() {
                     <div className="min-w-0">
                       <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
                       <p className="text-stone-600 text-[10px] truncate">{album.artist_name}</p>
-                      <p className="text-[var(--accent)] text-[10px]">★ {album.avg}</p>
+                      <p className="text-[var(--accent)] text-[10px]">★ {album.avg} avg.</p>
                     </div>
                   </Link>
                 ))}

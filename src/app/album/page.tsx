@@ -368,7 +368,7 @@ function AlbumPageInner() {
               )}
             </div>
             <div className="space-y-2">
-              {[...listens].reverse().map((listen) => (
+              {listens.map((listen) => (
                 <div key={listen.id} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-start gap-4 group">
                   <div className="flex-shrink-0 text-center min-w-[52px]">
                     <p className="text-[var(--accent)] text-xs font-bold">{ordinal(listen.listen_number)}</p>
