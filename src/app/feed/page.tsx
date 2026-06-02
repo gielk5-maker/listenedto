@@ -7,7 +7,10 @@ import FeedZoekbalk from "@/components/FeedZoekbalk";
 import FeedKaart from "@/components/FeedKaart";
 import ThemeApplicator from "@/components/ThemeApplicator";
 
-export default async function FeedPage() {
+export default async function FeedPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
+  const activeTab = tab === "popular" ? "popular" : "friends";
+
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -110,6 +113,54 @@ export default async function FeedPage() {
     .sort((a, b) => b.avg - a.avg || b.count - a.count)
     .slice(0, 5);
 
+  // Popular feed: most liked ratings with a review
+  let popularFeedRatings: typeof feedRatings = [];
+  let popularProfielMap: Record<string, string> = {};
+  let popularLikes: { id: string; user_id: string; rating_id: string }[] = [];
+  let popularComments: { id: string; user_id: string; rating_id: string; content: string; created_at: string }[] = [];
+  let popularCommentLikes: { id: string; user_id: string; comment_id: string }[] = [];
+
+  if (activeTab === "popular") {
+    const { data: popLikeCounts } = await supabase
+      .from("likes")
+      .select("rating_id")
+      .limit(500);
+
+    const likeCountMap: Record<string, number> = {};
+    popLikeCounts?.forEach(l => { likeCountMap[l.rating_id] = (likeCountMap[l.rating_id] ?? 0) + 1; });
+    const topRatingIds = Object.entries(likeCountMap).sort((a, b) => b[1] - a[1]).slice(0, 50).map(([id]) => id);
+
+    const { data: popRatings } = topRatingIds.length > 0
+      ? await supabase.from("ratings").select("*").in("id", topRatingIds).not("review", "is", null)
+      : { data: [] };
+
+    popularFeedRatings = (popRatings ?? []).sort((a, b) => (likeCountMap[b.id] ?? 0) - (likeCountMap[a.id] ?? 0));
+
+    const popUserIds = [...new Set(popularFeedRatings?.map(r => r.user_id) ?? [])];
+    const { data: popProfielen } = popUserIds.length > 0
+      ? await supabase.from("profiles").select("id, username").in("id", popUserIds)
+      : { data: [] };
+    popProfielen?.forEach(p => { popularProfielMap[p.id] = p.username; });
+
+    const popRatingIds = popularFeedRatings?.map(r => r.id) ?? [];
+    if (popRatingIds.length > 0) {
+      const [{ data: pl }, { data: pc }] = await Promise.all([
+        supabase.from("likes").select("id, user_id, rating_id").in("rating_id", popRatingIds),
+        supabase.from("comments").select("id, user_id, rating_id, content, created_at").in("rating_id", popRatingIds).order("created_at", { ascending: true }),
+      ]);
+      popularLikes = pl ?? [];
+      popularComments = pc ?? [];
+      const popCommentIds = popularComments.map(c => c.id);
+      if (popCommentIds.length > 0) {
+        const { data: pcl } = await supabase.from("comment_likes").select("id, user_id, comment_id").in("comment_id", popCommentIds);
+        popularCommentLikes = pcl ?? [];
+        const popCommenterIds = [...new Set(popularComments.map(c => c.user_id))];
+        const { data: pcp } = await supabase.from("profiles").select("id, username").in("id", popCommenterIds);
+        pcp?.forEach(p => { popularProfielMap[p.id] = p.username; });
+      }
+    }
+  }
+
   return (
     <div className="min-h-screen text-stone-50">
       <ThemeApplicator dbTheme={eigenProfiel?.theme ?? undefined} />
@@ -129,48 +180,75 @@ export default async function FeedPage() {
       <main className="max-w-5xl mx-auto px-5 py-8">
         <FeedZoekbalk />
 
+        {/* Tabs */}
+        <div className="flex gap-1 mb-6 bg-stone-900 rounded-2xl p-1 w-fit border border-stone-800/60">
+          <Link href="/feed?tab=friends"
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === "friends" ? "bg-stone-800 text-stone-100" : "text-stone-500 hover:text-stone-300"}`}>
+            Friends
+          </Link>
+          <Link href="/feed?tab=popular"
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${activeTab === "popular" ? "bg-stone-800 text-stone-100" : "text-stone-500 hover:text-stone-300"}`}>
+            Popular
+          </Link>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Feed kolom */}
           <div className="w-full lg:max-w-xl">
-            <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-5 font-semibold">Feed</h2>
 
-            {!feedRatings || feedRatings.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-stone-700 text-sm">The people you follow haven't rated anything yet.</p>
-              </div>
+            {activeTab === "friends" ? (
+              !feedRatings || feedRatings.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-stone-700 text-sm">The people you follow haven't rated anything yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {feedRatings.map((r) => {
+                    const vriendUsername = profielMap[r.user_id] ?? "?";
+                    const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
+                    const eigenRating = eigenRatingMap[albumKey] ?? null;
+                    const likeCount = allLikes?.filter((l) => l.rating_id === r.id).length ?? 0;
+                    const liked = allLikes?.some((l) => l.rating_id === r.id && l.user_id === user.id) ?? false;
+                    const comments = (allComments?.filter((c) => c.rating_id === r.id) ?? []).map((c) => ({
+                      id: c.id, user_id: c.user_id, username: profielMap[c.user_id] ?? "?",
+                      content: c.content, created_at: c.created_at,
+                      likeCount: allCommentLikes?.filter((cl) => cl.comment_id === c.id).length ?? 0,
+                      liked: allCommentLikes?.some((cl) => cl.comment_id === c.id && cl.user_id === user.id) ?? false,
+                    }));
+                    return (
+                      <FeedKaart key={r.id} r={r} vriendUsername={vriendUsername} eigenUserId={user.id}
+                        eigenUsername={eigenUsername} eigenRating={eigenRating} likeCount={likeCount}
+                        liked={liked} comments={comments} />
+                    );
+                  })}
+                </div>
+              )
             ) : (
-              <div className="space-y-3">
-                {feedRatings.map((r) => {
-                  const vriendUsername = profielMap[r.user_id] ?? "?";
-                  const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
-                  const eigenRating = eigenRatingMap[albumKey] ?? null;
-                  const likeCount = allLikes?.filter((l) => l.rating_id === r.id).length ?? 0;
-                  const liked = allLikes?.some((l) => l.rating_id === r.id && l.user_id === user.id) ?? false;
-                  const comments = (allComments?.filter((c) => c.rating_id === r.id) ?? []).map((c) => ({
-                    id: c.id,
-                    user_id: c.user_id,
-                    username: profielMap[c.user_id] ?? "?",
-                    content: c.content,
-                    created_at: c.created_at,
-                    likeCount: allCommentLikes?.filter((cl) => cl.comment_id === c.id).length ?? 0,
-                    liked: allCommentLikes?.some((cl) => cl.comment_id === c.id && cl.user_id === user.id) ?? false,
-                  }));
-
-                  return (
-                    <FeedKaart
-                      key={r.id}
-                      r={r}
-                      vriendUsername={vriendUsername}
-                      eigenUserId={user.id}
-                      eigenUsername={eigenUsername}
-                      eigenRating={eigenRating}
-                      likeCount={likeCount}
-                      liked={liked}
-                      comments={comments}
-                    />
-                  );
-                })}
-              </div>
+              popularFeedRatings.length === 0 ? (
+                <div className="text-center py-20">
+                  <p className="text-stone-700 text-sm">No popular reviews yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {popularFeedRatings.map((r) => {
+                    const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
+                    const eigenRating = eigenRatingMap[albumKey] ?? null;
+                    const likeCount = popularLikes.filter(l => l.rating_id === r.id).length;
+                    const liked = popularLikes.some(l => l.rating_id === r.id && l.user_id === user.id);
+                    const comments = popularComments.filter(c => c.rating_id === r.id).map(c => ({
+                      id: c.id, user_id: c.user_id, username: popularProfielMap[c.user_id] ?? "?",
+                      content: c.content, created_at: c.created_at,
+                      likeCount: popularCommentLikes.filter(cl => cl.comment_id === c.id).length,
+                      liked: popularCommentLikes.some(cl => cl.comment_id === c.id && cl.user_id === user.id),
+                    }));
+                    return (
+                      <FeedKaart key={r.id} r={r} vriendUsername={popularProfielMap[r.user_id] ?? "?"} eigenUserId={user.id}
+                        eigenUsername={eigenUsername} eigenRating={eigenRating} likeCount={likeCount}
+                        liked={liked} comments={comments} />
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
 
