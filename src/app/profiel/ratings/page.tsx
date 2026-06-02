@@ -16,6 +16,7 @@ export default async function AlleRatingsPage() {
     .from("ratings")
     .select("*")
     .eq("user_id", user.id)
+    .order("listened_at", { ascending: false })
     .order("created_at", { ascending: false });
 
   return (
@@ -61,7 +62,7 @@ export default async function AlleRatingsPage() {
                 </div>
                 <div className="flex flex-col items-end justify-between">
                   <span className="text-stone-700 text-xs">
-                    {new Date(r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    {new Date((r.listened_at ?? r.created_at) + (r.listened_at ? "T00:00:00" : "")).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                   </span>
                   {(r.moment_wanneer || r.moment_waar) && (
                     <span className="text-[var(--accent)] text-xs">📍</span>
