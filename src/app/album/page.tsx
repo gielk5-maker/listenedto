@@ -202,7 +202,7 @@ function AlbumPageInner() {
         .eq("user_id", user.id)
         .eq("album_name", name)
         .eq("artist_name", artist)
-        .order("listen_number", { ascending: true });
+        .order("listened_at", { ascending: true, nullsFirst: false });
       const existing = data ?? [];
       setListens(existing);
       if (existing.length === 0) setShowForm(true);
@@ -238,7 +238,7 @@ function AlbumPageInner() {
         .update({ rating: rating || null, review: review || null, listened_at: listenedAt })
         .eq("id", editingId);
       if (error) { setError(error.message); setSaving(false); return; }
-      setListens(prev => prev.map(l => l.id === editingId ? { ...l, rating: rating || null, review: review || null, listened_at: listenedAt } : l));
+      setListens(prev => prev.map(l => l.id === editingId ? { ...l, rating: rating || null, review: review || null, listened_at: listenedAt } : l).sort((a, b) => (a.listened_at ?? a.created_at).localeCompare(b.listened_at ?? b.created_at)));
     } else {
       const nextNumber = listens.length + 1;
       const { data, error } = await supabase.from("ratings").insert({
@@ -249,7 +249,7 @@ function AlbumPageInner() {
       }).select("id, listen_number, rating, review, listened_at, created_at").single();
       // Note: run SQL first → alter table ratings add column if not exists listen_number integer not null default 1;
       if (error) { setError(error.message); setSaving(false); return; }
-      if (data) setListens(prev => [...prev, data]);
+      if (data) setListens(prev => [...prev, data].sort((a, b) => (a.listened_at ?? a.created_at).localeCompare(b.listened_at ?? b.created_at)));
     }
 
     setSaving(false);

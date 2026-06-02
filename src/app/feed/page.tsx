@@ -96,17 +96,22 @@ export default async function FeedPage() {
 
   const { data: popularRaw } = await supabase
     .from("ratings")
-    .select("album_name, artist_name, album_image, album_url")
+    .select("album_name, artist_name, album_image, album_url, rating")
     .not("album_name", "is", null)
     .not("rating", "is", null);
 
-  const countMap: Record<string, { album_name: string; artist_name: string; album_image: string | null; album_url: string | null; count: number }> = {};
+  const ratingMap: Record<string, { album_name: string; artist_name: string; album_image: string | null; album_url: string | null; total: number; count: number }> = {};
   popularRaw?.forEach((r) => {
     const key = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
-    if (!countMap[key]) countMap[key] = { album_name: r.album_name, artist_name: r.artist_name, album_image: r.album_image, album_url: r.album_url, count: 0 };
-    countMap[key].count++;
+    if (!ratingMap[key]) ratingMap[key] = { album_name: r.album_name, artist_name: r.artist_name, album_image: r.album_image, album_url: r.album_url, total: 0, count: 0 };
+    ratingMap[key].total += r.rating;
+    ratingMap[key].count++;
   });
-  const popularAlbums = Object.values(countMap).sort((a, b) => b.count - a.count).slice(0, 10);
+  const popularAlbums = Object.values(ratingMap)
+    .filter((a) => a.count >= 2)
+    .map((a) => ({ ...a, avg: Math.round((a.total / a.count) * 10) / 10 }))
+    .sort((a, b) => b.avg - a.avg || b.count - a.count)
+    .slice(0, 10);
 
   return (
     <div className="min-h-screen text-stone-50">
@@ -175,7 +180,7 @@ export default async function FeedPage() {
           {/* Most popular — sidebar op desktop, boven feed op mobiel */}
           {popularAlbums.length > 0 && (
             <div className="w-full lg:w-56 lg:flex-shrink-0 order-first lg:order-last">
-              <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Most rated</h2>
+              <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Highest rated</h2>
 
               {/* Mobiel: horizontaal scroll */}
               <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden" style={{ scrollbarWidth: "none" }}>
@@ -194,7 +199,7 @@ export default async function FeedPage() {
                     </div>
                     <p className="text-stone-200 text-[11px] font-semibold truncate leading-tight">{album.album_name}</p>
                     <p className="text-stone-600 text-[10px] truncate mt-0.5">{album.artist_name}</p>
-                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">{album.count} {album.count === 1 ? "rating" : "ratings"}</p>
+                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg}</p>
                   </Link>
                 ))}
               </div>
@@ -217,7 +222,7 @@ export default async function FeedPage() {
                     <div className="min-w-0">
                       <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
                       <p className="text-stone-600 text-[10px] truncate">{album.artist_name}</p>
-                      <p className="text-[var(--accent)] text-[10px]">{album.count} {album.count === 1 ? "rating" : "ratings"}</p>
+                      <p className="text-[var(--accent)] text-[10px]">★ {album.avg}</p>
                     </div>
                   </Link>
                 ))}
