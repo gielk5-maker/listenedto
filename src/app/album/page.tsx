@@ -255,10 +255,8 @@ function AlbumPageInner() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => {
-      setSaved(false);
-      setShowForm(listens.length === 0 && !editingId ? false : false);
-      setEditingId(null);
-    }, 1200);
+      router.push("/feed");
+    }, 800);
   }
 
   async function deleteListen(id: string) {
