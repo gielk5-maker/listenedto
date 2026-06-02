@@ -35,7 +35,7 @@ function ZoekenInner() {
   useEffect(() => {
     const q = params.get("q");
     if (q) { setQuery(q); search(q); }
-  }, []);
+  }, [params]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
