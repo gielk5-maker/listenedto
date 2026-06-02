@@ -16,6 +16,14 @@ type Listen = {
   created_at: string;
 };
 
+type CommunityReview = {
+  username: string;
+  rating: number | null;
+  review: string | null;
+  listened_at: string | null;
+  created_at: string;
+};
+
 function ordinal(n: number) {
   const s = ["th", "st", "nd", "rd"];
   const v = n % 100;
@@ -190,23 +198,60 @@ function AlbumPageInner() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [communityReviews, setCommunityReviews] = useState<CommunityReview[]>([]);
+  const [communityStats, setCommunityStats] = useState<{ avg: number; total: number } | null>(null);
 
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
       setLoaded(true);
-      if (!user) { setShowForm(true); return; }
-      const { data } = await supabase
-        .from("ratings")
-        .select("id, listen_number, rating, review, listened_at, created_at")
-        .eq("user_id", user.id)
-        .eq("album_name", name)
-        .eq("artist_name", artist)
-        .order("listened_at", { ascending: true })
-        .order("created_at", { ascending: true });
-      const existing = data ?? [];
+
+      // Fetch own listens + all community ratings in parallel
+      const [ownResult, communityResult] = await Promise.all([
+        user ? supabase
+          .from("ratings")
+          .select("id, listen_number, rating, review, listened_at, created_at")
+          .eq("user_id", user.id)
+          .eq("album_name", name)
+          .eq("artist_name", artist)
+          .order("listened_at", { ascending: true })
+          .order("created_at", { ascending: true }) : Promise.resolve({ data: [] }),
+        supabase
+          .from("ratings")
+          .select("rating, review, listened_at, created_at, user_id")
+          .eq("album_name", name)
+          .eq("artist_name", artist),
+      ]);
+
+      const existing = ownResult.data ?? [];
       setListens(existing);
       if (existing.length === 0) setShowForm(true);
+
+      // Community stats
+      const allRatings = communityResult.data ?? [];
+      const withRating = allRatings.filter(r => r.rating != null);
+      if (withRating.length > 0) {
+        const avg = Math.round((withRating.reduce((s, r) => s + r.rating, 0) / withRating.length) * 10) / 10;
+        setCommunityStats({ avg, total: allRatings.length });
+      } else if (allRatings.length > 0) {
+        setCommunityStats({ avg: 0, total: allRatings.length });
+      }
+
+      // Community reviews: fetch usernames for entries with a review
+      const withReview = allRatings.filter(r => r.review && (!user || r.user_id !== user.id));
+      if (withReview.length > 0) {
+        const userIds = [...new Set(withReview.map(r => r.user_id))];
+        const { data: profiles } = await supabase.from("profiles").select("id, username").in("id", userIds);
+        const profileMap: Record<string, string> = {};
+        profiles?.forEach(p => { profileMap[p.id] = p.username; });
+        setCommunityReviews(withReview.map(r => ({
+          username: profileMap[r.user_id] ?? "?",
+          rating: r.rating,
+          review: r.review,
+          listened_at: r.listened_at,
+          created_at: r.created_at,
+        })).sort((a, b) => (b.listened_at ?? b.created_at).localeCompare(a.listened_at ?? a.created_at)));
+      }
     }
     load();
   }, [name, artist]);
@@ -388,6 +433,51 @@ function AlbumPageInner() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Community stats + reviews */}
+        {communityStats && (
+          <div className="space-y-4">
+            {/* Stats bar */}
+            <div className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-center gap-6">
+              <div>
+                <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-0.5">Avg. rating</p>
+                <p className="text-[var(--accent)] font-bold text-lg">
+                  {communityStats.avg > 0 ? `★ ${communityStats.avg}` : "—"}
+                </p>
+              </div>
+              <div className="w-px h-8 bg-stone-800" />
+              <div>
+                <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-0.5">Total listens</p>
+                <p className="text-stone-200 font-bold text-lg">{communityStats.total}</p>
+              </div>
+            </div>
+
+            {/* Reviews from others */}
+            {communityReviews.length > 0 && (
+              <div>
+                <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-3">Reviews</h2>
+                <div className="space-y-2">
+                  {communityReviews.map((r, i) => (
+                    <div key={i} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <Link href={`/user/${r.username}`} className="text-sm font-semibold text-stone-300 hover:text-white transition-colors">
+                          {r.username}
+                        </Link>
+                        <div className="flex items-center gap-2">
+                          {r.rating && <SmallStars rating={r.rating} />}
+                          <span className="text-stone-700 text-[10px]">
+                            {new Date(r.listened_at ? r.listened_at + "T00:00:00" : r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-stone-400 text-sm italic">"{r.review}"</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
