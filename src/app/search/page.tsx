@@ -47,7 +47,7 @@ function HandmatigForm({ onDone }: { onDone: () => void }) {
     let image = preview;
     if (!image) image = await fetchCover(name.trim(), artist.trim());
     const p = new URLSearchParams({ name: name.trim(), artist: artist.trim(), type: "album", ...(image ? { image } : {}) });
-    router.push(`/album?${p.toString()}`);
+    window.location.href = `/album?${p.toString()}`;
   }
 
   return (
@@ -136,7 +136,7 @@ function ZoekenInner() {
       ...(item.mbid ? { mbid: item.mbid } : {}),
       ...(item.url ? { url: item.url } : {}),
     });
-    router.push(`/album?${p.toString()}`);
+    window.location.href = `/album?${p.toString()}`;
   }
 
   return (

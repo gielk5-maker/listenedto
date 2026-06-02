@@ -57,7 +57,7 @@ export default function FeedZoekbalk() {
     });
     setQuery("");
     setOpen(false);
-    router.push(`/album?${p.toString()}`);
+    window.location.href = `/album?${p.toString()}`;
   }
 
   return (
