@@ -12,6 +12,7 @@ type Listen = {
   listen_number: number;
   rating: number | null;
   review: string | null;
+  listened_at: string | null;
   created_at: string;
 };
 
@@ -83,6 +84,7 @@ function AlbumPageInner() {
   const [showForm, setShowForm] = useState(false);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  const [listenedAt, setListenedAt] = useState(new Date().toISOString().slice(0, 10));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +96,7 @@ function AlbumPageInner() {
       if (!user) { setShowForm(true); return; }
       const { data } = await supabase
         .from("ratings")
-        .select("id, listen_number, rating, review, created_at")
+        .select("id, listen_number, rating, review, listened_at, created_at")
         .eq("user_id", user.id)
         .eq("album_name", name)
         .eq("artist_name", artist)
@@ -110,6 +112,7 @@ function AlbumPageInner() {
     setEditingId(listen.id);
     setRating(listen.rating ?? 0);
     setReview(listen.review ?? "");
+    setListenedAt(listen.listened_at ?? listen.created_at.slice(0, 10));
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -118,6 +121,7 @@ function AlbumPageInner() {
     setEditingId(null);
     setRating(0);
     setReview("");
+    setListenedAt(new Date().toISOString().slice(0, 10));
     setShowForm(true);
   }
 
@@ -129,18 +133,18 @@ function AlbumPageInner() {
 
     if (editingId) {
       const { error } = await supabase.from("ratings")
-        .update({ rating: rating || null, review: review || null })
+        .update({ rating: rating || null, review: review || null, listened_at: listenedAt })
         .eq("id", editingId);
       if (error) { setError(error.message); setSaving(false); return; }
-      setListens(prev => prev.map(l => l.id === editingId ? { ...l, rating: rating || null, review: review || null } : l));
+      setListens(prev => prev.map(l => l.id === editingId ? { ...l, rating: rating || null, review: review || null, listened_at: listenedAt } : l));
     } else {
       const nextNumber = listens.length + 1;
       const { data, error } = await supabase.from("ratings").insert({
         user_id: user.id, type, album_name: name, artist_name: artist,
         album_image: image, album_mbid: mbid, album_url: url,
         rating: rating || null, review: review || null,
-        listen_number: nextNumber,
-      }).select("id, listen_number, rating, review, created_at").single();
+        listen_number: nextNumber, listened_at: listenedAt,
+      }).select("id, listen_number, rating, review, listened_at, created_at").single();
       // Note: run SQL first → alter table ratings add column if not exists listen_number integer not null default 1;
       if (error) { setError(error.message); setSaving(false); return; }
       if (data) setListens(prev => [...prev, data]);
@@ -208,6 +212,17 @@ function AlbumPageInner() {
             </div>
 
             <div>
+              <label className="block text-xs text-stone-500 uppercase tracking-widest mb-1.5">Date listened</label>
+              <input
+                type="date"
+                value={listenedAt}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={e => setListenedAt(e.target.value)}
+                className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-4 py-3 text-stone-50 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
+              />
+            </div>
+
+            <div>
               <label className="block text-xs text-stone-500 uppercase tracking-widest mb-3">Rating</label>
               <StarRating value={rating} onChange={setRating} />
             </div>
@@ -262,7 +277,7 @@ function AlbumPageInner() {
                 <div key={listen.id} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40 flex items-start gap-4 group">
                   <div className="flex-shrink-0 text-center min-w-[52px]">
                     <p className="text-[var(--accent)] text-xs font-bold">{ordinal(listen.listen_number)}</p>
-                    <p className="text-stone-700 text-[10px] mt-0.5">{new Date(listen.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+                    <p className="text-stone-700 text-[10px] mt-0.5">{new Date(listen.listened_at ?? listen.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
                   </div>
                   <div className="flex-1 min-w-0">
                     {listen.rating && <SmallStars rating={listen.rating} />}
