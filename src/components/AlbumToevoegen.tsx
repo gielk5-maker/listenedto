@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { voegAlbumToeAanLijst } from "@/app/actions/profile";
@@ -19,16 +19,29 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
   const [searching, setSearching] = useState(false);
   const [added, setAdded] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const router = useRouter();
 
-  async function search(q: string) {
+  function handleInput(q: string) {
     setQuery(q);
-    if (!q.trim()) { setResults([]); return; }
+    setResults([]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!q.trim()) { setSearching(false); return; }
     setSearching(true);
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album`);
-    const data = await res.json();
-    setResults(data);
-    setSearching(false);
+    debounceRef.current = setTimeout(async () => {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(q.trim())}&type=album`);
+      const data = await res.json();
+      if (Array.isArray(data)) setResults(data);
+      setSearching(false);
+    }, 350);
+  }
+
+  function close() {
+    setOpen(false);
+    setQuery("");
+    setResults([]);
+    setAdded([]);
+    setError(null);
   }
 
   async function add(album: SearchResult) {
@@ -58,26 +71,28 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => { setOpen(false); setQuery(""); setResults([]); setAdded([]); }}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={close}>
           <div className="bg-stone-900 border border-stone-700 rounded-3xl p-5 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-stone-100">Add album to list</h3>
-              <button onClick={() => { setOpen(false); setQuery(""); setResults([]); setAdded([]); }} className="text-stone-500 hover:text-stone-300 text-lg">×</button>
+              <button onClick={close} className="text-stone-500 hover:text-stone-300 text-lg">×</button>
             </div>
-            <input
-              autoFocus
-              type="text"
-              value={query}
-              onChange={e => search(e.target.value)}
-              placeholder="Search an album or artist..."
-              className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-3 py-2 text-sm text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors mb-3"
-            />
+            <div className="relative mb-3">
+              <input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={e => handleInput(e.target.value)}
+                placeholder="Search an album or artist..."
+                className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-3 py-2 text-sm text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
+              />
+              {searching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-4 h-4 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
             {error && <p className="text-red-400 text-xs mb-2 bg-red-950/30 border border-red-900/50 rounded-xl px-3 py-2">{error}</p>}
-            {searching && (
-              <div className="flex justify-center py-4">
-                <div className="w-5 h-5 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />
-              </div>
-            )}
             <div className="space-y-1 max-h-72 overflow-y-auto">
               {results.map((r, i) => {
                 const key = `${r.name}__${r.artist}`;
