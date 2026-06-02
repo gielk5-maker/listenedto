@@ -115,6 +115,7 @@ export default async function FeedPage() {
           ListenedTo
         </Link>
         <nav className="flex items-center gap-5">
+          <Link href="/zoeken" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
           <Link href="/gebruikers" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profiel" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
           <form action={logout}>

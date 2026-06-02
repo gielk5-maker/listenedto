@@ -25,10 +25,14 @@ export default function FeedZoekbalk() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
-      const res = await fetch(`/api/zoeken?q=${encodeURIComponent(query.trim())}&type=album`);
-      const data = await res.json();
-      setResults(data);
-      setOpen(true);
+      try {
+        const res = await fetch(`/api/zoeken?q=${encodeURIComponent(query.trim())}&type=album`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setResults(data);
+          setOpen(data.length > 0);
+        }
+      } catch { /* ignore */ }
       setLoading(false);
     }, 350);
   }, [query]);
