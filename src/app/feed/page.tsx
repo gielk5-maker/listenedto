@@ -94,6 +94,19 @@ export default async function FeedPage() {
     : { data: [] };
   commenterProfielen?.forEach((p) => { profielMap[p.id] = p.username; });
 
+  const { data: popularRaw } = await supabase
+    .from("ratings")
+    .select("album_name, artist_name, album_image, album_url")
+    .not("album_name", "is", null);
+
+  const countMap: Record<string, { album_name: string; artist_name: string; album_image: string | null; album_url: string | null; count: number }> = {};
+  popularRaw?.forEach((r) => {
+    const key = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
+    if (!countMap[key]) countMap[key] = { album_name: r.album_name, artist_name: r.artist_name, album_image: r.album_image, album_url: r.album_url, count: 0 };
+    countMap[key].count++;
+  });
+  const popularAlbums = Object.values(countMap).sort((a, b) => b.count - a.count).slice(0, 10);
+
   return (
     <div className="min-h-screen text-stone-50">
       <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
@@ -112,6 +125,32 @@ export default async function FeedPage() {
 
       <main className="max-w-xl mx-auto px-5 py-8">
         <FeedZoekbalk />
+
+        {popularAlbums.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Most popular</h2>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
+              {popularAlbums.map((album) => (
+                <Link
+                  key={`${album.album_name}__${album.artist_name}`}
+                  href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
+                  className="flex-shrink-0 w-24 group"
+                >
+                  <div className="w-24 h-24 rounded-xl overflow-hidden bg-stone-800 mb-2 shadow-lg shadow-black/40 group-hover:opacity-80 transition-opacity">
+                    {album.album_image
+                      ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-stone-600 text-2xl">♪</div>
+                    }
+                  </div>
+                  <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
+                  <p className="text-stone-600 text-[10px] truncate mt-0.5">{album.artist_name}</p>
+                  <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">{album.count} {album.count === 1 ? "listen" : "listens"}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-5 font-semibold">Feed</h2>
 
         {!feedRatings || feedRatings.length === 0 ? (
