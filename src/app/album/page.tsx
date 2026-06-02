@@ -349,7 +349,7 @@ function AlbumPageInner() {
             <p className="text-stone-500 text-xs uppercase tracking-widest">{type === "track" ? "Track" : "Album"}</p>
             <h1 className="text-2xl font-bold leading-tight text-stone-50">{name}</h1>
             <p className="text-stone-400 font-medium">{artist}</p>
-            {loaded && !showForm && (
+            {!showForm && (
               <button
                 onClick={startNewListen}
                 className="mt-1 self-start bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)] font-bold rounded-xl px-4 py-2 text-sm transition-opacity"
