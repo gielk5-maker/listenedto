@@ -65,20 +65,28 @@ async function spotifySearch(query: string, type: string) {
 }
 
 async function musicBrainzSearch(query: string) {
-  // Search both by artist name and release title
-  const lucene = `(artist:"${query}" OR release:"${query}")`;
-  const res = await fetch(
-    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(lucene)}&limit=15&fmt=json`,
+  // Try exact release title search first
+  const releaseQuery = `release:"${query}" AND (primarytype:Album OR primarytype:Single)`;
+  const byTitle = await fetch(
+    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(releaseQuery)}&limit=10&fmt=json`,
     { headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" }, cache: "no-store" }
   );
-  if (!res.ok) return [];
-  const data = await res.json().catch(() => null);
-  if (!data) return [];
+  const titleData = byTitle.ok ? await byTitle.json().catch(() => null) : null;
+  const titleGroups = (titleData?.["release-groups"] ?? []).filter((r: Record<string, unknown>) => (r.score as number ?? 0) >= 70);
 
-  const groups = data["release-groups"] ?? [];
+  // Search by artist name
+  const artistQuery = `artist:"${query}" AND primarytype:Album`;
+  const byArtist = await fetch(
+    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(artistQuery)}&limit=10&fmt=json`,
+    { headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" }, cache: "no-store" }
+  );
+  const artistData = byArtist.ok ? await byArtist.json().catch(() => null) : null;
+  const artistGroups = (artistData?.["release-groups"] ?? []).filter((r: Record<string, unknown>) => (r.score as number ?? 0) >= 60);
+
+  // Merge: artist results first, then title results
+  const combined = [...artistGroups, ...titleGroups];
   const results = [];
-  for (const r of groups) {
-    if ((r.score ?? 0) < 50) continue;
+  for (const r of combined) {
     const artist = r["artist-credit"]?.[0]?.artist?.name ?? r["artist-credit"]?.[0]?.name ?? "";
     if (!artist || nietLatijn.test(r.title) || nietLatijn.test(artist)) continue;
     results.push({ name: r.title, artist, image: null, mbid: r.id, url: null });
