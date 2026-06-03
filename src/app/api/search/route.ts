@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { unstable_cache } from "next/cache";
 import { getSpotifyToken } from "@/lib/spotify";
 
 export const runtime = "nodejs";
@@ -21,7 +20,6 @@ function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
 async function spotifySearch(query: string, type: string) {
   const token = await getSpotifyToken();
   if (!token) return null;
-
   const spotifyType = type === "track" ? "track" : "album";
   const res = await fetch(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
@@ -30,7 +28,6 @@ async function spotifySearch(query: string, type: string) {
   if (!res.ok) return null;
   const data = await res.json().catch(() => null);
   if (!data) return null;
-
   if (type === "track") {
     const tracks = data.tracks?.items ?? [];
     return dedup(tracks
@@ -72,8 +69,7 @@ async function itunesSearch(query: string) {
   if (!res.ok) return [];
   const data = await res.json().catch(() => null);
   if (!data) return [];
-
-  const results = (data.results ?? [])
+  return dedup((data.results ?? [])
     .filter((a: Record<string, unknown>) => {
       const name = a.collectionName as string ?? "";
       const artist = a.artistName as string ?? "";
@@ -85,35 +81,19 @@ async function itunesSearch(query: string) {
       image: ((a.artworkUrl100 as string) ?? "").replace("100x100bb", "600x600bb") || null,
       mbid: null,
       url: a.collectionViewUrl as string ?? null,
-    }));
-
-  return dedup(results);
-}
-
-async function fetchSearch(query: string, type: string) {
-  // Try Spotify first
-  const spotifyResults = await spotifySearch(query, type);
-  if (spotifyResults && spotifyResults.length > 0) return spotifyResults;
-
-  // Fallback to iTunes Search API (no key needed, very reliable)
-  return await itunesSearch(query);
+    })));
 }
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   const type = request.nextUrl.searchParams.get("type") ?? "album";
-
   if (!query) return NextResponse.json([]);
 
-  const cachedSearch = unstable_cache(
-    () => fetchSearch(query, type),
-    [`search-v2-${type}-${query.toLowerCase().trim()}`],
-    { revalidate: 60 }
-  );
-
   try {
-    const results = await cachedSearch();
-    return NextResponse.json(results ?? []);
+    const spotify = await spotifySearch(query, type);
+    if (spotify && spotify.length > 0) return NextResponse.json(spotify);
+    const itunes = await itunesSearch(query);
+    return NextResponse.json(itunes);
   } catch {
     return NextResponse.json([]);
   }
