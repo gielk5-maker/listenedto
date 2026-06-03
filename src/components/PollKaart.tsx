@@ -52,10 +52,19 @@ export default function PollKaart({ userId }: { userId: string }) {
       const votedMap: Record<string, string> = {};
       (votes ?? []).forEach(v => { votedMap[v.poll_id] = v.vote; });
 
+      function hasArtist(set: Set<string>, artist: string) {
+        const a = artist.toLowerCase();
+        // Check exact, contains, or first word match
+        for (const s of set) {
+          if (s === a || s.includes(a) || a.includes(s) || s.startsWith(a.split(" ")[0])) return true;
+        }
+        return false;
+      }
+
       // Find first eligible unvoted poll
       for (const p of POLLS) {
-        const hasA = [...listenedArtists].some(a => a.includes(p.artist_a.toLowerCase()) || p.artist_a.toLowerCase().includes(a.split(" ")[0]));
-        const hasB = [...listenedArtists].some(a => a.includes(p.artist_b.toLowerCase()) || p.artist_b.toLowerCase().includes(a.split(" ")[0]));
+        const hasA = hasArtist(listenedArtists, p.artist_a);
+        const hasB = hasArtist(listenedArtists, p.artist_b);
 
         if (hasA && hasB) {
           setPoll(p);
