@@ -11,6 +11,7 @@ import AvatarUpload from "@/components/AvatarUpload";
 import FavorietenSlots from "@/components/FavorietenSlots";
 import LijstBeheer from "@/components/LijstBeheer";
 import RatingVerdeling from "@/components/RatingVerdeling";
+import ListeningStats from "@/components/ListeningStats";
 
 
 
@@ -121,6 +122,10 @@ export default async function ProfielPage() {
         </div>
 
         {/* Stats */}
+        {aantalRatings > 0 && (
+          <ListeningStats ratings={ratings.filter(r => r.rating != null).map(r => ({ rating: r.rating, listened_at: r.listened_at, created_at: r.created_at, artist_name: r.artist_name }))} />
+        )}
+
         {aantalRatings > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {topArtiesten.length > 0 && (
