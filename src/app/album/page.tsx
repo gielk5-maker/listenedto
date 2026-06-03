@@ -192,6 +192,18 @@ function AlbumPageInner() {
   const [loaded, setLoaded] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [genres, setGenres] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!name && !artist) return;
+    const p = new URLSearchParams({ artist: name ? artist : "" });
+    if (url) p.set("url", url);
+    if (name) p.set("album", name);
+    fetch(`/api/genres?${p.toString()}`)
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setGenres(data); })
+      .catch(() => {});
+  }, [name, artist, url]);
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [listenedAt, setListenedAt] = useState(new Date().toISOString().slice(0, 10));
@@ -349,6 +361,13 @@ function AlbumPageInner() {
             <p className="text-stone-500 text-xs uppercase tracking-widest">{type === "track" ? "Track" : "Album"}</p>
             <h1 className="text-2xl font-bold leading-tight text-stone-50">{name}</h1>
             <button onClick={() => window.location.href = `/artist?name=${encodeURIComponent(artist)}`} className="text-stone-400 font-medium hover:text-stone-200 transition-colors text-left">{artist}</button>
+            {genres.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {genres.map(g => (
+                  <span key={g} className="text-[11px] px-2 py-0.5 rounded-full bg-stone-800 border border-stone-700/60 text-stone-400">{g}</span>
+                ))}
+              </div>
+            )}
             {!showForm && (
               <button
                 onClick={startNewListen}
