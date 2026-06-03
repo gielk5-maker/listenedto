@@ -2,18 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-type Result = {
-  name: string;
-  artist: string;
-  image: string | null;
-  mbid: string | null;
-  url: string;
-};
+import { searchAlbums, type SearchResult } from "@/lib/search";
 
 export default function FeedZoekbalk() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<Result[]>([]);
+  const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -22,45 +15,14 @@ export default function FeedZoekbalk() {
 
   useEffect(() => {
     if (!query.trim()) { setResults([]); setOpen(false); return; }
-    // Clear old results immediately so user can't click a stale result
     setResults([]);
     setOpen(false);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
-      try {
-        // Try client-side Spotify first (avoids server rate limit)
-        let results: Result[] = [];
-        try {
-          const tokenRes = await fetch("/api/spotify-token");
-          const { token } = await tokenRes.json();
-          if (token) {
-            const spotifyRes = await fetch(
-              `https://api.spotify.com/v1/search?q=${encodeURIComponent(query.trim())}&type=album&limit=10`,
-              { headers: { Authorization: `Bearer ${token}` } }
-            );
-            if (spotifyRes.ok) {
-              const spotifyData = await spotifyRes.json();
-              const items = spotifyData.albums?.items ?? [];
-              if (items.length > 0) {
-                const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&type=album&_client=${encodeURIComponent(JSON.stringify(items))}`);
-                const data = await res.json();
-                if (Array.isArray(data)) results = data;
-              }
-            }
-          }
-        } catch { /* fall through */ }
-
-        // Fallback to server search (iTunes)
-        if (results.length === 0) {
-          const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&type=album`);
-          const data = await res.json();
-          if (Array.isArray(data)) results = data;
-        }
-
-        setResults(results);
-        setOpen(results.length > 0);
-      } catch { /* ignore */ }
+      const data = await searchAlbums(query.trim());
+      setResults(data);
+      setOpen(data.length > 0);
       setLoading(false);
     }, 350);
   }, [query]);
@@ -73,7 +35,7 @@ export default function FeedZoekbalk() {
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  function goToAlbum(item: Result) {
+  function goToAlbum(item: SearchResult) {
     const p = new URLSearchParams({
       name: item.name, artist: item.artist, type: "album",
       ...(item.image ? { image: item.image } : {}),
