@@ -36,6 +36,7 @@ export default function FeedZoekbalk() {
           setOpen(data.length > 0);
         }
       } catch { /* ignore */ }
+      // Note: rate limit errors return { _ratelimit: true } and are silently ignored (user can retry)
       setLoading(false);
     }, 350);
   }, [query]);

@@ -18,7 +18,6 @@ function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   const type = request.nextUrl.searchParams.get("type") ?? "album";
-  const debug = request.nextUrl.searchParams.get("debug") === "1";
 
   if (!query) {
     return NextResponse.json({ error: "Geen zoekopdracht" }, { status: 400 });
@@ -29,16 +28,15 @@ export async function GET(request: NextRequest) {
 
   const res = await fetch(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
-    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+    { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
   );
 
   const rawText = await res.text();
 
-  if (debug) {
-    return NextResponse.json({ status: res.status, raw: rawText.slice(0, 1000) });
-  }
-
-  if (!res.ok) {
+if (!res.ok) {
+    if (res.status === 429) {
+      return NextResponse.json({ _ratelimit: true }, { status: 200 });
+    }
     return NextResponse.json([], { status: 200 });
   }
 
