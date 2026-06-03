@@ -32,10 +32,8 @@ export async function GET(request: NextRequest) {
   );
 
   if (!res.ok) {
-    if (res.status === 429) {
-      return NextResponse.json([], { status: 200 }); // Rate limited — return empty, client retries on next keystroke
-    }
-    return NextResponse.json([], { status: 200 });
+    const errText = await res.text();
+    return NextResponse.json({ _error: errText, _status: res.status }, { status: 200 });
   }
 
   const data = await res.json();
