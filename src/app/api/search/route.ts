@@ -18,6 +18,7 @@ function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
 }
 
 export async function GET(request: NextRequest) {
+  try {
   const query = request.nextUrl.searchParams.get("q");
   const type = request.nextUrl.searchParams.get("type") ?? "album";
 
@@ -67,5 +68,9 @@ export async function GET(request: NextRequest) {
         url: (a.external_urls as Record<string, string>)?.spotify ?? null,
       }));
     return NextResponse.json(dedup(mapped));
+  }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    return NextResponse.json({ _crash: msg }, { status: 200 });
   }
 }
