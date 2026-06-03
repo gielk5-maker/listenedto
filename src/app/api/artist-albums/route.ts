@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (!artistItem) return NextResponse.json({ _err: "no artist found" });
 
     const albumsRes = await fetch(
-      `https://api.spotify.com/v1/artists/${artistItem.id}/albums?include_groups=album&limit=50&market=US`,
+      `https://api.spotify.com/v1/artists/${encodeURIComponent(artistItem.id)}/albums?include_groups=album&limit=20`,
       { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
     );
     if (!albumsRes.ok) return NextResponse.json({ _err: "albums failed", status: albumsRes.status });
