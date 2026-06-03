@@ -18,6 +18,7 @@ function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   const type = request.nextUrl.searchParams.get("type") ?? "album";
+  const debug = request.nextUrl.searchParams.get("debug") === "1";
 
   if (!query) {
     return NextResponse.json({ error: "Geen zoekopdracht" }, { status: 400 });
@@ -31,15 +32,26 @@ export async function GET(request: NextRequest) {
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
 
-  if (!res.ok) {
-    const errText = await res.text();
-    return NextResponse.json({ _error: errText, _status: res.status }, { status: 200 });
+  const rawText = await res.text();
+
+  if (debug) {
+    return NextResponse.json({ status: res.status, raw: rawText.slice(0, 1000) });
   }
 
-  const data = await res.json();
+  if (!res.ok) {
+    return NextResponse.json([], { status: 200 });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: any;
+  try {
+    data = JSON.parse(rawText);
+  } catch {
+    return NextResponse.json([], { status: 200 });
+  }
 
   if (type === "track") {
-    const tracks = data.tracks?.items ?? [];
+    const tracks = data?.tracks?.items ?? [];
     const mapped = tracks
       .filter((t: Record<string, unknown>) => {
         const artiest = (t.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
@@ -54,10 +66,9 @@ export async function GET(request: NextRequest) {
         mbid: null,
         url: (t.external_urls as Record<string, string>)?.spotify ?? null,
       }));
-
     return NextResponse.json(dedup(mapped));
   } else {
-    const albums = data.albums?.items ?? [];
+    const albums = data?.albums?.items ?? [];
     const mapped = albums
       .filter((a: Record<string, unknown>) => {
         const naam = a.name as string;
@@ -71,7 +82,6 @@ export async function GET(request: NextRequest) {
         mbid: null,
         url: (a.external_urls as Record<string, string>)?.spotify ?? null,
       }));
-
     return NextResponse.json(dedup(mapped));
   }
 }
