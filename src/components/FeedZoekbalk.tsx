@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { searchAlbums, type SearchResult } from "@/lib/search";
+import RandomAlbumButton from "@/components/RandomAlbumButton";
 
 export default function FeedZoekbalk() {
   const [query, setQuery] = useState("");
@@ -49,7 +50,8 @@ export default function FeedZoekbalk() {
 
   return (
     <div ref={containerRef} className="relative mb-6">
-      <div className="relative">
+      <div className="flex gap-2">
+        <div className="relative flex-1">
         <input
           type="text"
           value={query}
@@ -63,6 +65,8 @@ export default function FeedZoekbalk() {
             <div className="w-4 h-4 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />
           </div>
         )}
+        </div>
+        <RandomAlbumButton />
       </div>
 
       {open && results.length > 0 && (
