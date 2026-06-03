@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getSpotifyToken } from "@/lib/spotify";
 
 export const runtime = "nodejs";
 
@@ -44,9 +45,47 @@ async function itunesSearch(query: string) {
     })));
 }
 
+function mapSpotifyAlbums(items: Record<string, unknown>[]) {
+  return dedup(items
+    .filter(a => {
+      const naam = a.name as string;
+      const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
+      const albumType = a.album_type as string ?? "";
+      if (albumType === "single") return false;
+      return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
+    })
+    .map(a => ({
+      name: a.name as string,
+      artist: (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "",
+      image: (a.images as Array<Record<string, string>>)?.[0]?.url ?? null,
+      mbid: null,
+      url: (a.external_urls as Record<string, string>)?.spotify ?? null,
+    })));
+}
+
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   if (!query) return NextResponse.json([]);
-  const results = await itunesSearch(query);
-  return NextResponse.json(results);
+
+  // Try Spotify server-side first
+  try {
+    const token = await getSpotifyToken();
+    if (token) {
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+      );
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data) {
+          const mapped = mapSpotifyAlbums(data.albums?.items ?? []);
+          if (mapped.length > 0) return NextResponse.json(mapped);
+        }
+      }
+    }
+  } catch { /* fall through */ }
+
+  // Fallback: iTunes
+  const cleanQuery = query.replace(/\./g, " ").trim();
+  return NextResponse.json(await itunesSearch(cleanQuery));
 }

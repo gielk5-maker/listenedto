@@ -64,7 +64,11 @@ export async function searchAlbums(query: string): Promise<SearchResult[]> {
   if (spotify && spotify.length > 0) return spotify;
 
   // Fallback: iTunes via server
-  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+  // Clean query for better iTunes matching (remove dots, special chars)
+  const cleanQuery = query.replace(/\./g, " ").replace(/\s+/g, " ").trim();
+  const searchQuery = cleanQuery !== query ? cleanQuery : query;
+
+  const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
   const data = await res.json().catch(() => []);
   return Array.isArray(data) ? data : [];
 }
