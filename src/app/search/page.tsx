@@ -5,7 +5,7 @@ import Logo from "@/components/Logo";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { searchAlbums } from "@/lib/search";
+import { searchAlbums, searchArtists, type ArtistResult } from "@/lib/search";
 
 type Result = {
   name: string;
@@ -106,6 +106,7 @@ function ZoekenInner() {
   const params = useSearchParams();
   const [query, setQuery] = useState(params.get("q") ?? "");
   const [results, setResults] = useState<Result[]>([]);
+  const [artists, setArtists] = useState<ArtistResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
   const [showManual, setShowManual] = useState(false);
@@ -114,8 +115,12 @@ function ZoekenInner() {
     if (!q.trim()) return;
     setLoading(true);
     setSearched(true);
-    const results = await searchAlbums(q.trim());
-    setResults(results);
+    const [albumResults, artistResults] = await Promise.all([
+      searchAlbums(q.trim()),
+      searchArtists(q.trim()),
+    ]);
+    setResults(albumResults);
+    setArtists(artistResults);
     setLoading(false);
   }
 
@@ -166,6 +171,29 @@ function ZoekenInner() {
         {loading && (
           <div className="flex items-center justify-center py-20">
             <div className="w-6 h-6 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!loading && artists.length > 0 && (
+          <div>
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-3">Artists</h2>
+            <div className="flex gap-3">
+              {artists.map((artist, i) => (
+                <Link
+                  key={i}
+                  href={`/artist?name=${encodeURIComponent(artist.name)}`}
+                  className="flex flex-col items-center gap-2 group w-24"
+                >
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-stone-800 shadow-lg shadow-black/40 group-hover:opacity-80 transition-opacity">
+                    {artist.image
+                      ? <img src={artist.image} alt={artist.name} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-stone-600 text-2xl">🎤</div>
+                    }
+                  </div>
+                  <p className="text-stone-300 text-xs font-medium text-center truncate w-full">{artist.name}</p>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 

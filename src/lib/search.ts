@@ -8,6 +8,34 @@ export type SearchResult = {
   url: string | null;
 };
 
+export type ArtistResult = {
+  name: string;
+  image: string | null;
+};
+
+export async function searchArtists(query: string): Promise<ArtistResult[]> {
+  try {
+    const tokenRes = await fetch("/api/spotify-token");
+    const { token } = await tokenRes.json();
+    if (!token) return [];
+    const res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=3`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.artists?.items ?? [])
+      .filter((a: Record<string, unknown>) => !nietLatijn.test(a.name as string))
+      .slice(0, 3)
+      .map((a: Record<string, unknown>) => ({
+        name: a.name as string,
+        image: (a.images as Array<Record<string, string>>)?.[0]?.url ?? null,
+      }));
+  } catch {
+    return [];
+  }
+}
+
 function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
   const seen = new Set<string>();
   return items.filter((item) => {
