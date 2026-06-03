@@ -1,6 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const COOKIE_OPTIONS = {
+  maxAge: 60 * 60 * 24 * 30, // 30 days
+  sameSite: "lax" as const,
+  secure: true,
+};
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -8,6 +14,7 @@ export async function proxy(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      cookieOptions: COOKIE_OPTIONS,
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -18,7 +25,7 @@ export async function proxy(request: NextRequest) {
           );
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
+            supabaseResponse.cookies.set(name, value, { ...COOKIE_OPTIONS, ...options })
           );
         },
       },
