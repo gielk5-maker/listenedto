@@ -66,25 +66,20 @@ async function spotifySearch(query: string, type: string) {
 
 async function musicBrainzSearch(query: string) {
   const res = await fetch(
-    `https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(query)}&limit=10&fmt=json`,
+    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&limit=15&fmt=json`,
     { headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" }, cache: "no-store" }
   );
   if (!res.ok) return [];
   const data = await res.json().catch(() => null);
   if (!data) return [];
 
-  const releases = data.releases ?? [];
+  const groups = data["release-groups"] ?? [];
   const results = [];
-  for (const r of releases.slice(0, 10)) {
+  for (const r of groups) {
+    if ((r.score ?? 0) < 60) continue;
     const artist = r["artist-credit"]?.[0]?.artist?.name ?? r["artist-credit"]?.[0]?.name ?? "";
     if (!artist || nietLatijn.test(r.title) || nietLatijn.test(artist)) continue;
-    // Get cover from Cover Art Archive
-    let image = null;
-    try {
-      const coverRes = await fetch(`https://coverartarchive.org/release/${r.id}/front-250`, { redirect: "follow", cache: "no-store" });
-      if (coverRes.ok) image = coverRes.url;
-    } catch { /* no cover */ }
-    results.push({ name: r.title, artist, image, mbid: r.id, url: null });
+    results.push({ name: r.title, artist, image: null, mbid: r.id, url: null });
     if (results.length >= 8) break;
   }
   return dedup(results);
