@@ -120,7 +120,7 @@ export default async function ProfielPage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold truncate text-stone-100">{artiest}</p>
                         <p className="text-stone-600 text-xs">
-                          {info.count} {info.count === 1 ? "album" : "albums"} · avg. {(info.totalRating / info.count).toFixed(1)} ★
+                          {info.count} {info.count === 1 ? "listen" : "listens"} · avg. {(info.totalRating / info.count).toFixed(1)} ★
                         </p>
                       </div>
                     </div>
