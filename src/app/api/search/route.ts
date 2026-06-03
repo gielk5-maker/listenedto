@@ -27,13 +27,16 @@ export async function GET(request: NextRequest) {
   }
 
   const token = await getSpotifyToken();
+  if (!token) return NextResponse.json([]);
   const spotifyType = type === "track" ? "track" : "album";
 
   const res = await fetch(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
-  const data = await res.json();
+  if (!res.ok) return NextResponse.json([]);
+  const data = await res.json().catch(() => null);
+  if (!data) return NextResponse.json([]);
 
   if (type === "track") {
     const tracks = data.tracks?.items ?? [];
