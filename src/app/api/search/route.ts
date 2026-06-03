@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
   const res = await fetch(
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
-    { headers: { Authorization: `Bearer ${token}` }, next: { revalidate: 300 } }
+    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
 
   const rawText = await res.text();
