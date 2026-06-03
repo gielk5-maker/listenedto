@@ -70,18 +70,14 @@ function ArtistPageInner() {
           .trim();
       }
 
-      // Build rating map from DB + calculate overall avg
+      // Build rating map — store under normalized key only
       const ratingMap: Record<string, { total: number; count: number }> = {};
       const allRatings = ratingsRes.data ?? [];
       allRatings.forEach(r => {
-        const exact = r.album_name.toLowerCase();
-        const norm = normalize(r.album_name);
-        const keys = [...new Set([exact, norm])]; // deduplicate
-        for (const key of keys) {
-          if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
-          ratingMap[key].total += r.rating;
-          ratingMap[key].count++;
-        }
+        const key = normalize(r.album_name);
+        if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
+        ratingMap[key].total += r.rating;
+        ratingMap[key].count++;
       });
 
       if (allRatings.length > 0) {
@@ -91,9 +87,7 @@ function ArtistPageInner() {
 
       // Merge
       const merged: Album[] = spotifyData.albums.map((a: Album) => {
-        const exact = a.name.toLowerCase();
-        const norm = normalize(a.name);
-        const stats = ratingMap[exact] ?? ratingMap[norm];
+        const stats = ratingMap[normalize(a.name)];
         return {
           ...a,
           avg: stats ? Math.round((stats.total / stats.count) * 10) / 10 : undefined,
