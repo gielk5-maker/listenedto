@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
 
   const cachedSearch = unstable_cache(
     () => fetchSearch(query, type),
-    [`search-${type}-${query.toLowerCase().trim()}`],
+    [`search-v2-${type}-${query.toLowerCase().trim()}`],
     { revalidate: 60 }
   );
 
