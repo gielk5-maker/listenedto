@@ -64,34 +64,29 @@ async function spotifySearch(query: string, type: string) {
   }
 }
 
-async function musicBrainzSearch(query: string) {
-  // Try exact release title search first
-  const releaseQuery = `release:"${query}" AND (primarytype:Album OR primarytype:Single)`;
-  const byTitle = await fetch(
-    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(releaseQuery)}&limit=10&fmt=json`,
-    { headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" }, cache: "no-store" }
+async function itunesSearch(query: string) {
+  const res = await fetch(
+    `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=10`,
+    { cache: "no-store" }
   );
-  const titleData = byTitle.ok ? await byTitle.json().catch(() => null) : null;
-  const titleGroups = (titleData?.["release-groups"] ?? []).filter((r: Record<string, unknown>) => (r.score as number ?? 0) >= 70);
+  if (!res.ok) return [];
+  const data = await res.json().catch(() => null);
+  if (!data) return [];
 
-  // Search by artist name
-  const artistQuery = `artist:"${query}" AND primarytype:Album`;
-  const byArtist = await fetch(
-    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(artistQuery)}&limit=10&fmt=json`,
-    { headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" }, cache: "no-store" }
-  );
-  const artistData = byArtist.ok ? await byArtist.json().catch(() => null) : null;
-  const artistGroups = (artistData?.["release-groups"] ?? []).filter((r: Record<string, unknown>) => (r.score as number ?? 0) >= 60);
+  const results = (data.results ?? [])
+    .filter((a: Record<string, unknown>) => {
+      const name = a.collectionName as string ?? "";
+      const artist = a.artistName as string ?? "";
+      return name && artist && !nietLatijn.test(name) && !nietLatijn.test(artist);
+    })
+    .map((a: Record<string, unknown>) => ({
+      name: a.collectionName as string,
+      artist: a.artistName as string,
+      image: ((a.artworkUrl100 as string) ?? "").replace("100x100bb", "600x600bb") || null,
+      mbid: null,
+      url: a.collectionViewUrl as string ?? null,
+    }));
 
-  // Merge: artist results first, then title results
-  const combined = [...artistGroups, ...titleGroups];
-  const results = [];
-  for (const r of combined) {
-    const artist = r["artist-credit"]?.[0]?.artist?.name ?? r["artist-credit"]?.[0]?.name ?? "";
-    if (!artist || nietLatijn.test(r.title) || nietLatijn.test(artist)) continue;
-    results.push({ name: r.title, artist, image: null, mbid: r.id, url: null });
-    if (results.length >= 8) break;
-  }
   return dedup(results);
 }
 
@@ -100,11 +95,8 @@ async function fetchSearch(query: string, type: string) {
   const spotifyResults = await spotifySearch(query, type);
   if (spotifyResults && spotifyResults.length > 0) return spotifyResults;
 
-  // Fallback to MusicBrainz
-  if (type === "album") {
-    return await musicBrainzSearch(query);
-  }
-  return [];
+  // Fallback to iTunes Search API (no key needed, very reliable)
+  return await itunesSearch(query);
 }
 
 export async function GET(request: NextRequest) {
@@ -116,7 +108,7 @@ export async function GET(request: NextRequest) {
   const cachedSearch = unstable_cache(
     () => fetchSearch(query, type),
     [`search-${type}-${query.toLowerCase().trim()}`],
-    { revalidate: 600 }
+    { revalidate: 60 }
   );
 
   try {
