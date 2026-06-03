@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { volg, ontvolg } from "@/app/actions/social";
 import Image from "next/image";
+import TasteMatch from "@/components/TasteMatch";
 
 
 
@@ -114,6 +115,13 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
             </form>
           )}
         </div>
+
+        {/* Taste match */}
+        {!isZichzelf && (
+          <div className="mb-8">
+            <TasteMatch ownUserId={user.id} otherUserId={profiel.id} />
+          </div>
+        )}
 
         {/* Favourites */}
         {favorieten && favorieten.length > 0 && (
