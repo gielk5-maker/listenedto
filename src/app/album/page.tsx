@@ -348,7 +348,7 @@ function AlbumPageInner() {
           <div className="flex flex-col justify-end pb-1 gap-2">
             <p className="text-stone-500 text-xs uppercase tracking-widest">{type === "track" ? "Track" : "Album"}</p>
             <h1 className="text-2xl font-bold leading-tight text-stone-50">{name}</h1>
-            <Link href={`/artist?name=${encodeURIComponent(artist)}`} className="text-stone-400 font-medium hover:text-stone-200 transition-colors">{artist}</Link>
+            <button onClick={() => window.location.href = `/artist?name=${encodeURIComponent(artist)}`} className="text-stone-400 font-medium hover:text-stone-200 transition-colors text-left">{artist}</button>
             {!showForm && (
               <button
                 onClick={startNewListen}

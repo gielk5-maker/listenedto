@@ -9,22 +9,22 @@ export async function GET(request: NextRequest) {
 
   try {
     const token = await getSpotifyToken();
-    if (!token) return NextResponse.json({ _err: "no token" });
+    if (!token) return NextResponse.json([]);
 
     const searchRes = await fetch(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(artist)}&type=artist&limit=1`,
       { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
     );
-    if (!searchRes.ok) return NextResponse.json({ _err: "search failed", status: searchRes.status, body: await searchRes.text() });
+    if (!searchRes.ok) return NextResponse.json([]);
     const searchData = await searchRes.json();
     const artistItem = searchData.artists?.items?.[0];
-    if (!artistItem) return NextResponse.json({ _err: "no artist found" });
+    if (!artistItem) return NextResponse.json([]);
 
     const albumsRes = await fetch(
-      `https://api.spotify.com/v1/artists/${encodeURIComponent(artistItem.id)}/albums?include_groups=album&limit=20`,
+      `https://api.spotify.com/v1/artists/${encodeURIComponent(artistItem.id)}/albums?include_groups=album&limit=10`,
       { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
     );
-    if (!albumsRes.ok) return NextResponse.json({ _err: "albums failed", status: albumsRes.status });
+    if (!albumsRes.ok) return NextResponse.json([]);
     const albumsData = await albumsRes.json();
 
     // Dedup by name
