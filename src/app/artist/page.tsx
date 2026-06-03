@@ -74,10 +74,10 @@ function ArtistPageInner() {
       const ratingMap: Record<string, { total: number; count: number }> = {};
       const allRatings = ratingsRes.data ?? [];
       allRatings.forEach(r => {
-        // Store under both exact and normalized key
         const exact = r.album_name.toLowerCase();
         const norm = normalize(r.album_name);
-        for (const key of [exact, norm]) {
+        const keys = [...new Set([exact, norm])]; // deduplicate
+        for (const key of keys) {
           if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
           ratingMap[key].total += r.rating;
           ratingMap[key].count++;
