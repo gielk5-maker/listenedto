@@ -23,17 +23,33 @@ const POLLS: Poll[] = [
   { id: "nas-vs-jayz", question: "Who is the better artist?", artist_a: "Nas", artist_b: "Jay-Z" },
 ];
 
+async function fetchArtistImage(name: string): Promise<string | null> {
+  try {
+    const tokenRes = await fetch("/api/spotify-token");
+    const { token } = await tokenRes.json();
+    if (!token) return null;
+    const res = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=1`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.artists?.items?.[0]?.images?.[0]?.url ?? null;
+  } catch { return null; }
+}
+
 export default function PollKaart({ userId }: { userId: string }) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [voted, setVoted] = useState<string | null>(null);
   const [counts, setCounts] = useState<{ a: number; b: number }>({ a: 0, b: 0 });
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
+  const [imageA, setImageA] = useState<string | null>(null);
+  const [imageB, setImageB] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
     async function findEligiblePoll() {
-      // Get all user's logged artists
       const { data: ratings } = await supabase
         .from("ratings")
         .select("artist_name")
@@ -43,7 +59,6 @@ export default function PollKaart({ userId }: { userId: string }) {
         (ratings ?? []).map(r => r.artist_name.toLowerCase())
       );
 
-      // Get already voted poll IDs
       const { data: votes } = await supabase
         .from("poll_votes")
         .select("poll_id, vote")
@@ -54,27 +69,31 @@ export default function PollKaart({ userId }: { userId: string }) {
 
       function hasArtist(set: Set<string>, artist: string) {
         const a = artist.toLowerCase();
-        // Check exact, contains, or first word match
         for (const s of set) {
           if (s === a || s.includes(a) || a.includes(s) || s.startsWith(a.split(" ")[0])) return true;
         }
         return false;
       }
 
-      // Find first eligible unvoted poll
       for (const p of POLLS) {
         const hasA = hasArtist(listenedArtists, p.artist_a);
         const hasB = hasArtist(listenedArtists, p.artist_b);
 
         if (hasA && hasB) {
           setPoll(p);
+
+          // Fetch artist images
+          const [imgA, imgB] = await Promise.all([
+            fetchArtistImage(p.artist_a),
+            fetchArtistImage(p.artist_b),
+          ]);
+          setImageA(imgA);
+          setImageB(imgB);
+
           if (votedMap[p.id]) {
             setVoted(votedMap[p.id]);
-            // Get vote counts
             const { data: allVotes } = await supabase
-              .from("poll_votes")
-              .select("vote")
-              .eq("poll_id", p.id);
+              .from("poll_votes").select("vote").eq("poll_id", p.id);
             const a = (allVotes ?? []).filter(v => v.vote === "a").length;
             const b = (allVotes ?? []).filter(v => v.vote === "b").length;
             setCounts({ a, b });
@@ -112,43 +131,58 @@ export default function PollKaart({ userId }: { userId: string }) {
 
       {!voted ? (
         <div className="grid grid-cols-2 gap-3">
-          {(["a", "b"] as const).map(choice => (
+          {([
+            { choice: "a" as const, name: poll.artist_a, img: imageA },
+            { choice: "b" as const, name: poll.artist_b, img: imageB },
+          ]).map(({ choice, name, img }) => (
             <button
               key={choice}
               onClick={() => vote(choice)}
               disabled={voting}
-              className="bg-stone-800 hover:bg-stone-700 border border-stone-700/60 hover:border-[var(--accent)] rounded-2xl px-4 py-3.5 text-sm font-semibold text-stone-200 transition-all disabled:opacity-50"
+              className="flex flex-col items-center gap-3 bg-stone-800 hover:bg-stone-700 border border-stone-700/60 hover:border-[var(--accent)] rounded-2xl px-4 py-4 transition-all disabled:opacity-50"
             >
-              {choice === "a" ? poll.artist_a : poll.artist_b}
+              {img ? (
+                <img src={img} alt={name} className="w-16 h-16 rounded-full object-cover shadow-lg shadow-black/40" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-stone-700 flex items-center justify-center text-2xl">🎤</div>
+              )}
+              <span className="text-sm font-semibold text-stone-200">{name}</span>
             </button>
           ))}
         </div>
       ) : (
         <div className="space-y-3">
-          {(["a", "b"] as const).map(choice => {
-            const name = choice === "a" ? poll.artist_a : poll.artist_b;
-            const pct = choice === "a" ? pctA : pctB;
-            const count = choice === "a" ? counts.a : counts.b;
-            const isWinner = (choice === "a" ? counts.a : counts.b) >= (choice === "a" ? counts.b : counts.a);
+          {([
+            { choice: "a" as const, name: poll.artist_a, img: imageA, pct: pctA, count: counts.a },
+            { choice: "b" as const, name: poll.artist_b, img: imageB, pct: pctB, count: counts.b },
+          ]).map(({ choice, name, img, pct, count }) => {
+            const isWinner = choice === "a" ? counts.a >= counts.b : counts.b >= counts.a;
             const isVoted = voted === choice;
             return (
-              <div key={choice}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-sm font-semibold ${isVoted ? "text-[var(--accent)]" : "text-stone-300"}`}>
-                    {name} {isVoted && "✓"}
-                  </span>
-                  <span className="text-stone-500 text-xs">{pct}% · {count} {count === 1 ? "vote" : "votes"}</span>
-                </div>
-                <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-700 ${isWinner ? "bg-[var(--accent)]" : "bg-stone-600"}`}
-                    style={{ width: `${pct}%` }}
-                  />
+              <div key={choice} className="flex items-center gap-3">
+                {img ? (
+                  <img src={img} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-stone-700 flex items-center justify-center text-lg flex-shrink-0">🎤</div>
+                )}
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className={`text-sm font-semibold ${isVoted ? "text-[var(--accent)]" : "text-stone-300"}`}>
+                      {name} {isVoted && "✓"}
+                    </span>
+                    <span className="text-stone-500 text-xs">{pct}% · {count}</span>
+                  </div>
+                  <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${isWinner ? "bg-[var(--accent)]" : "bg-stone-600"}`}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             );
           })}
-          <p className="text-stone-700 text-xs mt-2">{total} {total === 1 ? "vote" : "votes"} total</p>
+          <p className="text-stone-700 text-xs mt-1">{total} {total === 1 ? "vote" : "votes"} total</p>
         </div>
       )}
     </div>

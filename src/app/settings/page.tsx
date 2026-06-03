@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import Logo from "@/components/Logo";
 import ThemeSettings from "@/components/ThemeSettings";
 import AccountSettings from "@/components/AccountSettings";
+import ProfileSettings from "@/components/ProfileSettings";
 
 export default async function InstellingenPage() {
   const supabase = await createClient();
@@ -11,9 +12,11 @@ export default async function InstellingenPage() {
   if (!user) redirect("/login");
 
   const { data: profiel } = await supabase
-    .from("profiles").select("username").eq("id", user.id).single();
+    .from("profiles").select("username, bio, spotify_url").eq("id", user.id).single();
 
   const username = profiel?.username ?? user.user_metadata?.username ?? "";
+  const bio = profiel?.bio ?? "";
+  const spotifyUrl = profiel?.spotify_url ?? "";
 
   return (
     <div className="min-h-screen text-stone-50">
@@ -32,6 +35,12 @@ export default async function InstellingenPage() {
         <section>
           <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Your themes</h2>
           <ThemeSettings />
+        </section>
+
+        {/* Profile */}
+        <section>
+          <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Profile</h2>
+          <ProfileSettings bio={bio} spotifyUrl={spotifyUrl} />
         </section>
 
         {/* Account */}
