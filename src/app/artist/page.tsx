@@ -51,18 +51,12 @@ function ArtistPageInner() {
     async function load() {
       setLoading(true);
 
-      // Fetch Spotify albums + ratings in parallel
-      const [spotifyRes, ratingsRes] = await Promise.all([
-        fetch(`/api/artist-albums?artist=${encodeURIComponent(artistName)}`),
-        supabase.from("ratings").select("album_name, rating").eq("artist_name", artistName).not("rating", "is", null),
-      ]);
-
+      // Fetch Spotify albums first, then query ratings by album name
+      const spotifyRes = await fetch(`/api/artist-albums?artist=${encodeURIComponent(artistName)}`);
       const spotifyData = await spotifyRes.json();
       if (!spotifyData.albums) { setLoading(false); return; }
 
-      setArtistInfo(spotifyData.artist);
-
-      // Normalize album name: strip parenthetical suffixes for matching
+      // Normalize album name helper (defined early so we can use below)
       function normalize(name: string) {
         return name.toLowerCase()
           .replace(/\s*[\[(][^\])]*(explicit|deluxe|remaster|edition|version|bonus|anniversary|expanded)[^\])]*[\])]/gi, "")
@@ -70,19 +64,40 @@ function ArtistPageInner() {
           .trim();
       }
 
+      // Query by artist name (catches main albums) + by album names (catches collabs)
+      const albumNames = spotifyData.albums.map((a: Album) => a.name);
+      const [byArtist, byAlbum] = await Promise.all([
+        supabase.from("ratings").select("album_name, rating")
+          .ilike("artist_name", `%${artistName}%`).not("rating", "is", null),
+        supabase.from("ratings").select("album_name, rating")
+          .in("album_name", albumNames).not("rating", "is", null),
+      ]);
+
+      // Merge and deduplicate by normalized album name
+      const seen = new Set<string>();
+      const allRatingsRaw = [...(byArtist.data ?? []), ...(byAlbum.data ?? [])];
+      const ratingsData = allRatingsRaw.filter(r => {
+        const key = normalize(r.album_name);
+        const id = `${key}__${r.rating}`;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+
+      setArtistInfo(spotifyData.artist);
+
       // Build rating map — store under normalized key only
       const ratingMap: Record<string, { total: number; count: number }> = {};
-      const allRatings = ratingsRes.data ?? [];
-      allRatings.forEach(r => {
+      ratingsData.forEach(r => {
         const key = normalize(r.album_name);
         if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
         ratingMap[key].total += r.rating;
         ratingMap[key].count++;
       });
 
-      if (allRatings.length > 0) {
-        const total = allRatings.reduce((s, r) => s + r.rating, 0);
-        setAvgRating(Math.round((total / allRatings.length) * 10) / 10);
+      if (ratingsData.length > 0) {
+        const total = ratingsData.reduce((s, r) => s + r.rating, 0);
+        setAvgRating(Math.round((total / ratingsData.length) * 10) / 10);
       }
 
       // Merge
