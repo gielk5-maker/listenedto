@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 type Rating = {
   rating: number;
@@ -11,7 +11,6 @@ type Rating = {
 
 export default function ListeningStats({ ratings }: { ratings: Rating[] }) {
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
-  const [topGenre, setTopGenre] = useState<string | null>(null);
 
   if (ratings.length === 0) return null;
 
@@ -45,19 +44,12 @@ export default function ListeningStats({ ratings }: { ratings: Rating[] }) {
   const thisYear = now.getFullYear();
   const thisYearCount = ratings.filter(r => getDate(r).getFullYear() === thisYear).length;
 
-  // Top artists for genre lookup
-  const artistCount: Record<string, number> = {};
-  ratings.forEach(r => { artistCount[r.artist_name] = (artistCount[r.artist_name] ?? 0) + 1; });
-  const topArtists = Object.entries(artistCount).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([a]) => a);
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
-  useEffect(() => {
-    if (topArtists.length === 0) return;
-    fetch(`/api/top-genre?artists=${encodeURIComponent(topArtists.join(","))}`)
-      .then(r => r.json())
-      .then(data => { if (typeof data === "string") setTopGenre(data); })
-      .catch(() => {});
-  }, [topArtists.join(",")]);
+  // Avg rating last 3 months
+  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+  const recentRatings = ratings.filter(r => getDate(r) >= threeMonthsAgo);
+  const recentAvg = recentRatings.length > 0
+    ? (recentRatings.reduce((s, r) => s + r.rating, 0) / recentRatings.length).toFixed(1)
+    : null;
 
   return (
     <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60 space-y-5">
@@ -74,8 +66,8 @@ export default function ListeningStats({ ratings }: { ratings: Rating[] }) {
           <p className="text-[10px] text-stone-600 mt-0.5">Fav decade</p>
         </div>
         <div className="bg-stone-800/60 rounded-2xl p-3 text-center">
-          <p className="text-sm font-bold text-[var(--accent)] truncate px-1" title={topGenre ?? ""}>{topGenre ?? "—"}</p>
-          <p className="text-[10px] text-stone-600 mt-0.5">Top genre</p>
+          <p className="text-xl font-bold text-[var(--accent)]">{recentAvg ?? "—"}</p>
+          <p className="text-[10px] text-stone-600 mt-0.5">Avg (3mo)</p>
         </div>
       </div>
 
