@@ -30,26 +30,10 @@ export async function GET(request: NextRequest) {
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
-
-  const rawText = await res.text();
-
-if (!res.ok) {
-    if (res.status === 429) {
-      return NextResponse.json({ _ratelimit: true }, { status: 200 });
-    }
-    return NextResponse.json([], { status: 200 });
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let data: any;
-  try {
-    data = JSON.parse(rawText);
-  } catch {
-    return NextResponse.json([], { status: 200 });
-  }
+  const data = await res.json();
 
   if (type === "track") {
-    const tracks = data?.tracks?.items ?? [];
+    const tracks = data.tracks?.items ?? [];
     const mapped = tracks
       .filter((t: Record<string, unknown>) => {
         const artiest = (t.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
@@ -66,7 +50,7 @@ if (!res.ok) {
       }));
     return NextResponse.json(dedup(mapped));
   } else {
-    const albums = data?.albums?.items ?? [];
+    const albums = data.albums?.items ?? [];
     const mapped = albums
       .filter((a: Record<string, unknown>) => {
         const naam = a.name as string;
