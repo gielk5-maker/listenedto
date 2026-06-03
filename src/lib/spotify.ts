@@ -6,9 +6,9 @@ export async function getSpotifyToken(): Promise<string> {
     return cachedToken;
   }
 
-  const credentials = Buffer.from(
+  const credentials = btoa(
     `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-  ).toString("base64");
+  );
 
   const res = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -17,6 +17,7 @@ export async function getSpotifyToken(): Promise<string> {
       "Content-Type": "application/x-www-form-urlencoded",
     },
     body: "grant_type=client_credentials",
+    cache: "no-store",
   });
 
   const data = await res.json();

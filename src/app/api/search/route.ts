@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSpotifyToken } from "@/lib/spotify";
 
+export const runtime = "nodejs";
+
 const nietLatijn = /[Ѐ-ӿ一-鿿぀-ゟ゠-ヿ가-힯؀-ۿ]/;
 
 function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
