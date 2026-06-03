@@ -50,6 +50,9 @@ export default function PollKaart({ userId }: { userId: string }) {
 
   useEffect(() => {
     async function findEligiblePoll() {
+      // Pick today's poll based on date — same poll for everyone each day
+      const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+
       const { data: ratings } = await supabase
         .from("ratings")
         .select("artist_name")
@@ -75,14 +78,15 @@ export default function PollKaart({ userId }: { userId: string }) {
         return false;
       }
 
-      for (const p of POLLS) {
+      // Try today's poll first, then scan forward for next eligible one
+      for (let i = 0; i < POLLS.length; i++) {
+        const p = POLLS[(daysSinceEpoch + i) % POLLS.length];
         const hasA = hasArtist(listenedArtists, p.artist_a);
         const hasB = hasArtist(listenedArtists, p.artist_b);
 
         if (hasA && hasB) {
           setPoll(p);
 
-          // Fetch artist images
           const [imgA, imgB] = await Promise.all([
             fetchArtistImage(p.artist_a),
             fetchArtistImage(p.artist_b),
@@ -90,14 +94,13 @@ export default function PollKaart({ userId }: { userId: string }) {
           setImageA(imgA);
           setImageB(imgB);
 
-          if (votedMap[p.id]) {
-            setVoted(votedMap[p.id]);
-            const { data: allVotes } = await supabase
-              .from("poll_votes").select("vote").eq("poll_id", p.id);
-            const a = (allVotes ?? []).filter(v => v.vote === "a").length;
-            const b = (allVotes ?? []).filter(v => v.vote === "b").length;
-            setCounts({ a, b });
-          }
+          const { data: allVotes } = await supabase
+            .from("poll_votes").select("vote").eq("poll_id", p.id);
+          const a = (allVotes ?? []).filter(v => v.vote === "a").length;
+          const b = (allVotes ?? []).filter(v => v.vote === "b").length;
+          setCounts({ a, b });
+
+          if (votedMap[p.id]) setVoted(votedMap[p.id]);
           break;
         }
       }
@@ -126,7 +129,10 @@ export default function PollKaart({ userId }: { userId: string }) {
 
   return (
     <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60 mb-6">
-      <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold mb-3">Poll</p>
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold">Daily Poll</p>
+        <p className="text-[10px] text-stone-700">{new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
+      </div>
       <p className="text-stone-200 font-semibold mb-4">{poll.question}</p>
 
       {!voted ? (
