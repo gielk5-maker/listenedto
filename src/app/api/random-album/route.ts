@@ -17,11 +17,11 @@ export async function GET() {
   const token = await getSpotifyToken();
   if (!token) return NextResponse.json({ error: "unavailable" }, { status: 503 });
 
-  function filterAlbums(items: Record<string, unknown>[]) {
-    return items.filter((a) => {
-      const type = a.album_type as string;
-      const tracks = (a.total_tracks as number) ?? 0;
-      return type !== "single" && tracks >= 4;
+  function filterAlbums(items: (Record<string, unknown> | null)[]) {
+    return items.filter((a): a is Record<string, unknown> => {
+      if (!a) return false;
+      const type = (a.album_type as string) ?? "";
+      return type === "album" || type === "compilation";
     });
   }
 
@@ -30,16 +30,16 @@ export async function GET() {
   // Try up to 3 different seeds until we get results
   for (let attempt = 0; attempt < 3; attempt++) {
     const seed = SEEDS[Math.floor(Math.random() * SEEDS.length)];
-    const offset = Math.floor(Math.random() * 5) * 10; // 0, 10, 20, 30, or 40
+    const offset = Math.floor(Math.random() * 10); // 0-9
 
     const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(seed)}&type=album&limit=50&offset=${offset}`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(seed)}&type=album&limit=10&offset=${offset}`,
       { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
     );
     if (!res.ok) continue;
 
     const data = await res.json();
-    const items: Record<string, unknown>[] = data.albums?.items ?? [];
+    const items: (Record<string, unknown> | null)[] = data.albums?.items ?? [];
     albums = filterAlbums(items);
     if (albums.length > 0) break;
   }
