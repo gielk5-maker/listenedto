@@ -1,26 +1,51 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+type PollType = "artist_vs" | "album_vs" | "hot_take";
 
 type Poll = {
   id: string;
+  type: PollType;
   question: string;
-  artist_a: string;
-  artist_b: string;
+  option_a?: string; // artist or album name
+  option_b?: string;
+  artist_a?: string; // for album_vs: the artist of album a
+  artist_b?: string;
 };
 
 const POLLS: Poll[] = [
-  { id: "jayz-vs-lilwayne", question: "Who is the better artist?", artist_a: "Jay-Z", artist_b: "Lil Wayne" },
-  { id: "drake-vs-kendrick", question: "Who is the better artist?", artist_a: "Drake", artist_b: "Kendrick Lamar" },
-  { id: "kanye-vs-jayz", question: "Who is the better artist?", artist_a: "Kanye West", artist_b: "Jay-Z" },
-  { id: "eminem-vs-drake", question: "Who is the better artist?", artist_a: "Eminem", artist_b: "Drake" },
-  { id: "kendrick-vs-jcole", question: "Who is the better artist?", artist_a: "Kendrick Lamar", artist_b: "J. Cole" },
-  { id: "frank-vs-sza", question: "Who is the better artist?", artist_a: "Frank Ocean", artist_b: "SZA" },
-  { id: "tyler-vs-childishgambino", question: "Who is the better artist?", artist_a: "Tyler, the Creator", artist_b: "Childish Gambino" },
-  { id: "beyonce-vs-rihanna", question: "Who is the better artist?", artist_a: "Beyoncé", artist_b: "Rihanna" },
-  { id: "kanye-vs-kendrick", question: "Who is the better artist?", artist_a: "Kanye West", artist_b: "Kendrick Lamar" },
-  { id: "nas-vs-jayz", question: "Who is the better artist?", artist_a: "Nas", artist_b: "Jay-Z" },
+  // Artist vs
+  { id: "drake-vs-kendrick", type: "artist_vs", question: "Who is the better artist?", option_a: "Drake", option_b: "Kendrick Lamar" },
+  { id: "kanye-vs-jayz", type: "artist_vs", question: "Who is the better artist?", option_a: "Kanye West", option_b: "Jay-Z" },
+  { id: "kendrick-vs-jcole", type: "artist_vs", question: "Who is the better artist?", option_a: "Kendrick Lamar", option_b: "J. Cole" },
+  { id: "tyler-vs-frank", type: "artist_vs", question: "Who is the better artist?", option_a: "Tyler, the Creator", option_b: "Frank Ocean" },
+  { id: "nas-vs-jayz", type: "artist_vs", question: "Who is the better artist?", option_a: "Nas", option_b: "Jay-Z" },
+  { id: "beyonce-vs-rihanna", type: "artist_vs", question: "Who is the better artist?", option_a: "Beyoncé", option_b: "Rihanna" },
+  { id: "eminem-vs-drake", type: "artist_vs", question: "Who is the better artist?", option_a: "Eminem", option_b: "Drake" },
+  { id: "kanye-vs-kendrick", type: "artist_vs", question: "Who is the better artist?", option_a: "Kanye West", option_b: "Kendrick Lamar" },
+
+  // Album vs
+  { id: "mbdtf-vs-tpab", type: "album_vs", question: "Which is the better album?", option_a: "My Beautiful Dark Twisted Fantasy", option_b: "To Pimp a Butterfly", artist_a: "Kanye West", artist_b: "Kendrick Lamar" },
+  { id: "illmatic-vs-ready", type: "album_vs", question: "Which is the better album?", option_a: "Illmatic", option_b: "Ready to Die", artist_a: "Nas", artist_b: "The Notorious B.I.G." },
+  { id: "blueprint-vs-reasonable", type: "album_vs", question: "Which is the better album?", option_a: "The Blueprint", option_b: "Reasonable Doubt", artist_a: "Jay-Z", artist_b: "Jay-Z" },
+  { id: "damn-vs-gkmc", type: "album_vs", question: "Which is the better album?", option_a: "DAMN.", option_b: "good kid, m.A.A.d city", artist_a: "Kendrick Lamar", artist_b: "Kendrick Lamar" },
+  { id: "channel-vs-blonde", type: "album_vs", question: "Which is the better album?", option_a: "Channel Orange", option_b: "Blonde", artist_a: "Frank Ocean", artist_b: "Frank Ocean" },
+  { id: "flower-vs-igor", type: "album_vs", question: "Which is the better album?", option_a: "Flower Boy", option_b: "IGOR", artist_a: "Tyler, the Creator", artist_b: "Tyler, the Creator" },
+  { id: "808s-vs-yeezus", type: "album_vs", question: "Which is the better album?", option_a: "808s & Heartbreak", option_b: "Yeezus", artist_a: "Kanye West", artist_b: "Kanye West" },
+
+  // Hot takes
+  { id: "hot-drake-overrated", type: "hot_take", question: "Drake is overrated." },
+  { id: "hot-albums-better-eps", type: "hot_take", question: "Album intros and outros are usually skips." },
+  { id: "hot-features-ruin", type: "hot_take", question: "Features often ruin albums." },
+  { id: "hot-streaming-worse", type: "hot_take", question: "Streaming has made albums worse." },
+  { id: "hot-debut-best", type: "hot_take", question: "An artist's debut album is usually their best." },
+  { id: "hot-lyrics-overrated", type: "hot_take", question: "Lyrics are overrated — production matters more." },
+  { id: "hot-shorter-better", type: "hot_take", question: "Albums under 40 minutes are almost always better." },
+  { id: "hot-kanye-goat", type: "hot_take", question: "Kanye West is the greatest artist of his generation." },
+  { id: "hot-concept-albums", type: "hot_take", question: "Concept albums are rarely as good as people claim." },
+  { id: "hot-new-better", type: "hot_take", question: "New music is better than old music." },
 ];
 
 async function fetchArtistImage(name: string): Promise<string | null> {
@@ -28,15 +53,26 @@ async function fetchArtistImage(name: string): Promise<string | null> {
     const tokenRes = await fetch("/api/spotify-token");
     const { token } = await tokenRes.json();
     if (!token) return null;
-    const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=1`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(name)}&type=artist&limit=1`, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) return null;
     const data = await res.json();
     return data.artists?.items?.[0]?.images?.[0]?.url ?? null;
   } catch { return null; }
 }
+
+async function fetchAlbumImage(album: string, artist: string): Promise<string | null> {
+  try {
+    const tokenRes = await fetch("/api/spotify-token");
+    const { token } = await tokenRes.json();
+    if (!token) return null;
+    const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(`${album} ${artist}`)}&type=album&limit=1`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.albums?.items?.[0]?.images?.[0]?.url ?? null;
+  } catch { return null; }
+}
+
+type Comment = { id: string; username: string; content: string; created_at: string };
 
 export default function PollKaart({ userId }: { userId: string }) {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -46,63 +82,85 @@ export default function PollKaart({ userId }: { userId: string }) {
   const [voting, setVoting] = useState(false);
   const [imageA, setImageA] = useState<string | null>(null);
   const [imageB, setImageB] = useState<string | null>(null);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [comment, setComment] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [username, setUsername] = useState("");
   const supabase = createClient();
+  const commentRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function findEligiblePoll() {
-      // Pick today's poll based on date — same poll for everyone each day
       const daysSinceEpoch = Math.floor(Date.now() / 86400000);
 
-      const { data: ratings } = await supabase
-        .from("ratings")
-        .select("artist_name")
-        .eq("user_id", userId);
+      const [ratingsRes, votesRes, profileRes] = await Promise.all([
+        supabase.from("ratings").select("album_name, artist_name").eq("user_id", userId),
+        supabase.from("poll_votes").select("poll_id, vote").eq("user_id", userId),
+        supabase.from("profiles").select("username").eq("id", userId).single(),
+      ]);
 
-      const listenedArtists = new Set(
-        (ratings ?? []).map(r => r.artist_name.toLowerCase())
-      );
+      setUsername(profileRes.data?.username ?? "");
 
-      const { data: votes } = await supabase
-        .from("poll_votes")
-        .select("poll_id, vote")
-        .eq("user_id", userId);
-
+      const listenedArtists = new Set((ratingsRes.data ?? []).map(r => r.artist_name.toLowerCase()));
+      const listenedAlbums = new Set((ratingsRes.data ?? []).map(r => r.album_name.toLowerCase()));
       const votedMap: Record<string, string> = {};
-      (votes ?? []).forEach(v => { votedMap[v.poll_id] = v.vote; });
+      (votesRes.data ?? []).forEach(v => { votedMap[v.poll_id] = v.vote; });
 
-      function hasArtist(set: Set<string>, artist: string) {
+      function hasArtist(artist: string) {
         const a = artist.toLowerCase();
-        for (const s of set) {
+        for (const s of listenedArtists) {
           if (s === a || s.includes(a) || a.includes(s) || s.startsWith(a.split(" ")[0])) return true;
         }
         return false;
       }
 
-      // Try today's poll first, then scan forward for next eligible one
+      function hasAlbum(album: string) {
+        const a = album.toLowerCase().replace(/\s*[\[(][^\])]*[\])]/g, "").trim();
+        for (const s of listenedAlbums) {
+          const sn = s.replace(/\s*[\[(][^\])]*[\])]/g, "").trim();
+          if (sn === a || sn.includes(a) || a.includes(sn)) return true;
+        }
+        return false;
+      }
+
       for (let i = 0; i < POLLS.length; i++) {
         const p = POLLS[(daysSinceEpoch + i) % POLLS.length];
-        const hasA = hasArtist(listenedArtists, p.artist_a);
-        const hasB = hasArtist(listenedArtists, p.artist_b);
 
-        if (hasA && hasB) {
-          setPoll(p);
+        let eligible = false;
+        if (p.type === "hot_take") eligible = true;
+        else if (p.type === "artist_vs") eligible = hasArtist(p.option_a!) && hasArtist(p.option_b!);
+        else if (p.type === "album_vs") eligible = hasAlbum(p.option_a!) && hasAlbum(p.option_b!);
 
-          const [imgA, imgB] = await Promise.all([
-            fetchArtistImage(p.artist_a),
-            fetchArtistImage(p.artist_b),
-          ]);
-          setImageA(imgA);
-          setImageB(imgB);
+        if (!eligible) continue;
 
-          const { data: allVotes } = await supabase
-            .from("poll_votes").select("vote").eq("poll_id", p.id);
-          const a = (allVotes ?? []).filter(v => v.vote === "a").length;
-          const b = (allVotes ?? []).filter(v => v.vote === "b").length;
-          setCounts({ a, b });
+        setPoll(p);
 
-          if (votedMap[p.id]) setVoted(votedMap[p.id]);
-          break;
+        // Fetch images
+        if (p.type === "artist_vs") {
+          const [imgA, imgB] = await Promise.all([fetchArtistImage(p.option_a!), fetchArtistImage(p.option_b!)]);
+          setImageA(imgA); setImageB(imgB);
+        } else if (p.type === "album_vs") {
+          const [imgA, imgB] = await Promise.all([fetchAlbumImage(p.option_a!, p.artist_a!), fetchAlbumImage(p.option_b!, p.artist_b!)]);
+          setImageA(imgA); setImageB(imgB);
         }
+
+        // Load votes + comments
+        const [allVotesRes, commentsRes] = await Promise.all([
+          supabase.from("poll_votes").select("vote").eq("poll_id", p.id),
+          supabase.from("poll_comments").select("id, user_id, content, created_at").eq("poll_id", p.id).order("created_at", { ascending: true }),
+        ]);
+        const a = (allVotesRes.data ?? []).filter(v => v.vote === "a").length;
+        const b = (allVotesRes.data ?? []).filter(v => v.vote === "b").length;
+        setCounts({ a, b });
+        if (votedMap[p.id]) setVoted(votedMap[p.id]);
+
+        // Get usernames for comments
+        const userIds = [...new Set((commentsRes.data ?? []).map(c => c.user_id))];
+        const profilesRes = userIds.length > 0 ? await supabase.from("profiles").select("id, username").in("id", userIds) : { data: [] };
+        const profileMap: Record<string, string> = {};
+        (profilesRes.data ?? []).forEach(p => { profileMap[p.id] = p.username; });
+        setComments((commentsRes.data ?? []).map(c => ({ id: c.id, username: profileMap[c.user_id] ?? "?", content: c.content, created_at: c.created_at })));
+        break;
       }
       setLoading(false);
     }
@@ -121,76 +179,106 @@ export default function PollKaart({ userId }: { userId: string }) {
     setVoting(false);
   }
 
+  async function postComment(e: React.FormEvent) {
+    e.preventDefault();
+    if (!comment.trim() || !poll || posting) return;
+    setPosting(true);
+    const { data } = await supabase.from("poll_comments").insert({ user_id: userId, poll_id: poll.id, content: comment.trim() }).select("id, content, created_at").single();
+    if (data) setComments(prev => [...prev, { id: data.id, username, content: data.content, created_at: data.created_at }]);
+    setComment("");
+    setPosting(false);
+  }
+
   if (loading || !poll) return null;
 
   const total = counts.a + counts.b;
   const pctA = total > 0 ? Math.round((counts.a / total) * 100) : 50;
   const pctB = total > 0 ? Math.round((counts.b / total) * 100) : 50;
+  const isHotTake = poll.type === "hot_take";
+  const labelA = isHotTake ? "Agree" : poll.option_a!;
+  const labelB = isHotTake ? "Disagree" : poll.option_b!;
 
   return (
-    <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold">Daily Poll</p>
+    <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60 mb-6 space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold">
+          {isHotTake ? "🔥 Hot Take" : "Daily Poll"}
+        </p>
         <p className="text-[10px] text-stone-700">{new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
       </div>
-      <p className="text-stone-200 font-semibold mb-4">{poll.question}</p>
 
+      <p className="text-stone-200 font-semibold">{poll.question}</p>
+
+      {/* Voting */}
       {!voted ? (
-        <div className="grid grid-cols-2 gap-3">
-          {([
-            { choice: "a" as const, name: poll.artist_a, img: imageA },
-            { choice: "b" as const, name: poll.artist_b, img: imageB },
-          ]).map(({ choice, name, img }) => (
-            <button
-              key={choice}
-              onClick={() => vote(choice)}
-              disabled={voting}
-              className="flex flex-col items-center gap-3 bg-stone-800 hover:bg-stone-700 border border-stone-700/60 hover:border-[var(--accent)] rounded-2xl px-4 py-4 transition-all disabled:opacity-50"
-            >
-              {img ? (
-                <img src={img} alt={name} className="w-16 h-16 rounded-full object-cover shadow-lg shadow-black/40" />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-stone-700 flex items-center justify-center text-2xl">🎤</div>
-              )}
-              <span className="text-sm font-semibold text-stone-200">{name}</span>
+        <div className={`grid gap-3 ${isHotTake ? "grid-cols-2" : "grid-cols-2"}`}>
+          {([{ choice: "a" as const, label: labelA, img: imageA }, { choice: "b" as const, label: labelB, img: imageB }]).map(({ choice, label, img }) => (
+            <button key={choice} onClick={() => vote(choice)} disabled={voting}
+              className="flex flex-col items-center gap-2 bg-stone-800 hover:bg-stone-700 border border-stone-700/60 hover:border-[var(--accent)] rounded-2xl px-4 py-4 transition-all disabled:opacity-50">
+              {!isHotTake && img ? (
+                <img src={img} alt={label} className={`object-cover shadow-lg shadow-black/40 ${poll.type === "album_vs" ? "w-16 h-16 rounded-xl" : "w-16 h-16 rounded-full"}`} />
+              ) : !isHotTake ? (
+                <div className={`w-16 h-16 bg-stone-700 flex items-center justify-center text-2xl ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
+              ) : null}
+              <span className={`font-semibold text-stone-200 text-center leading-tight ${isHotTake ? "text-base" : "text-sm"}`}>{label}</span>
             </button>
           ))}
         </div>
       ) : (
         <div className="space-y-3">
-          {([
-            { choice: "a" as const, name: poll.artist_a, img: imageA, pct: pctA, count: counts.a },
-            { choice: "b" as const, name: poll.artist_b, img: imageB, pct: pctB, count: counts.b },
-          ]).map(({ choice, name, img, pct, count }) => {
+          {([{ choice: "a" as const, label: labelA, img: imageA, pct: pctA, count: counts.a }, { choice: "b" as const, label: labelB, img: imageB, pct: pctB, count: counts.b }]).map(({ choice, label, img, pct, count }) => {
             const isWinner = choice === "a" ? counts.a >= counts.b : counts.b >= counts.a;
             const isVoted = voted === choice;
             return (
               <div key={choice} className="flex items-center gap-3">
-                {img ? (
-                  <img src={img} alt={name} className="w-10 h-10 rounded-full object-cover flex-shrink-0" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-stone-700 flex items-center justify-center text-lg flex-shrink-0">🎤</div>
+                {!isHotTake && (img
+                  ? <img src={img} alt={label} className={`w-10 h-10 object-cover flex-shrink-0 ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`} />
+                  : <div className={`w-10 h-10 bg-stone-700 flex items-center justify-center text-lg flex-shrink-0 ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
                 )}
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className={`text-sm font-semibold ${isVoted ? "text-[var(--accent)]" : "text-stone-300"}`}>
-                      {name} {isVoted && "✓"}
-                    </span>
+                    <span className={`text-sm font-semibold ${isVoted ? "text-[var(--accent)]" : "text-stone-300"}`}>{label} {isVoted && "✓"}</span>
                     <span className="text-stone-500 text-xs">{pct}% · {count}</span>
                   </div>
                   <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${isWinner ? "bg-[var(--accent)]" : "bg-stone-600"}`}
-                      style={{ width: `${pct}%` }}
-                    />
+                    <div className={`h-full rounded-full transition-all duration-700 ${isWinner ? "bg-[var(--accent)]" : "bg-stone-600"}`} style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               </div>
             );
           })}
-          <p className="text-stone-700 text-xs mt-1">{total} {total === 1 ? "vote" : "votes"} total</p>
+          <p className="text-stone-700 text-xs">{total} {total === 1 ? "vote" : "votes"}</p>
         </div>
       )}
+
+      {/* Comments */}
+      <div className="border-t border-stone-800/60 pt-4 space-y-3">
+        {comments.length > 0 && (
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {comments.map(c => (
+              <div key={c.id} className="flex gap-2">
+                <span className="text-[var(--accent)] text-xs font-semibold flex-shrink-0">{c.username}</span>
+                <span className="text-stone-400 text-xs">{c.content}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <form onSubmit={postComment} className="flex gap-2">
+          <input
+            ref={commentRef}
+            value={comment}
+            onChange={e => setComment(e.target.value)}
+            placeholder="Add a comment..."
+            maxLength={200}
+            className="flex-1 bg-stone-800 border border-stone-700/60 rounded-xl px-3 py-2 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-xs"
+          />
+          <button type="submit" disabled={posting || !comment.trim()}
+            className="px-3 py-2 bg-[var(--accent)] hover:opacity-90 disabled:opacity-40 text-[var(--accent-text)] font-bold rounded-xl text-xs transition-opacity flex-shrink-0">
+            Post
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
