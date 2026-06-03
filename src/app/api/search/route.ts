@@ -65,8 +65,10 @@ async function spotifySearch(query: string, type: string) {
 }
 
 async function musicBrainzSearch(query: string) {
+  // Search both by artist name and release title
+  const lucene = `(artist:"${query}" OR release:"${query}")`;
   const res = await fetch(
-    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(query)}&limit=15&fmt=json`,
+    `https://musicbrainz.org/ws/2/release-group/?query=${encodeURIComponent(lucene)}&limit=15&fmt=json`,
     { headers: { "User-Agent": "ListenedTo/1.0 (listenedto.app)" }, cache: "no-store" }
   );
   if (!res.ok) return [];
@@ -76,7 +78,7 @@ async function musicBrainzSearch(query: string) {
   const groups = data["release-groups"] ?? [];
   const results = [];
   for (const r of groups) {
-    if ((r.score ?? 0) < 60) continue;
+    if ((r.score ?? 0) < 50) continue;
     const artist = r["artist-credit"]?.[0]?.artist?.name ?? r["artist-credit"]?.[0]?.name ?? "";
     if (!artist || nietLatijn.test(r.title) || nietLatijn.test(artist)) continue;
     results.push({ name: r.title, artist, image: null, mbid: r.id, url: null });
