@@ -29,14 +29,38 @@ export default function FeedZoekbalk() {
     debounceRef.current = setTimeout(async () => {
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&type=album`);
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setResults(data);
-          setOpen(data.length > 0);
+        // Try client-side Spotify first (avoids server rate limit)
+        let results: Result[] = [];
+        try {
+          const tokenRes = await fetch("/api/spotify-token");
+          const { token } = await tokenRes.json();
+          if (token) {
+            const spotifyRes = await fetch(
+              `https://api.spotify.com/v1/search?q=${encodeURIComponent(query.trim())}&type=album&limit=10`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            if (spotifyRes.ok) {
+              const spotifyData = await spotifyRes.json();
+              const items = spotifyData.albums?.items ?? [];
+              if (items.length > 0) {
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&type=album&_client=${encodeURIComponent(JSON.stringify(items))}`);
+                const data = await res.json();
+                if (Array.isArray(data)) results = data;
+              }
+            }
+          }
+        } catch { /* fall through */ }
+
+        // Fallback to server search (iTunes)
+        if (results.length === 0) {
+          const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}&type=album`);
+          const data = await res.json();
+          if (Array.isArray(data)) results = data;
         }
+
+        setResults(results);
+        setOpen(results.length > 0);
       } catch { /* ignore */ }
-      // Note: rate limit errors return { _ratelimit: true } and are silently ignored (user can retry)
       setLoading(false);
     }, 350);
   }, [query]);

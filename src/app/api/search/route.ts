@@ -17,48 +17,20 @@ function dedup<T extends { name: string; artist: string }>(items: T[]): T[] {
   });
 }
 
-async function spotifySearch(query: string, type: string) {
-  const token = await getSpotifyToken();
-  if (!token) return null;
-  const spotifyType = type === "track" ? "track" : "album";
-  const res = await fetch(
-    `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
-    { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
-  );
-  if (!res.ok) return null;
-  const data = await res.json().catch(() => null);
-  if (!data) return null;
-  if (type === "track") {
-    const tracks = data.tracks?.items ?? [];
-    return dedup(tracks
-      .filter((t: Record<string, unknown>) => {
-        const artiest = (t.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
-        return !nietLatijn.test(t.name as string) && !nietLatijn.test(artiest);
-      })
-      .map((t: Record<string, unknown>) => ({
-        name: t.name as string,
-        artist: (t.artists as Array<Record<string, string>>)?.[0]?.name ?? "",
-        image: (t.album as Record<string, unknown>)?.images
-          ? ((t.album as Record<string, unknown>).images as Array<Record<string, string>>)?.[0]?.url ?? null : null,
-        mbid: null,
-        url: (t.external_urls as Record<string, string>)?.spotify ?? null,
-      })));
-  } else {
-    const albums = data.albums?.items ?? [];
-    return dedup(albums
-      .filter((a: Record<string, unknown>) => {
-        const naam = a.name as string;
-        const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
-        return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
-      })
-      .map((a: Record<string, unknown>) => ({
-        name: a.name as string,
-        artist: (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "",
-        image: (a.images as Array<Record<string, string>>)?.[0]?.url ?? null,
-        mbid: null,
-        url: (a.external_urls as Record<string, string>)?.spotify ?? null,
-      })));
-  }
+function mapSpotifyAlbums(items: Record<string, unknown>[]) {
+  return dedup(items
+    .filter(a => {
+      const naam = a.name as string;
+      const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
+      return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
+    })
+    .map(a => ({
+      name: a.name as string,
+      artist: (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "",
+      image: (a.images as Array<Record<string, string>>)?.[0]?.url ?? null,
+      mbid: null,
+      url: (a.external_urls as Record<string, string>)?.spotify ?? null,
+    })));
 }
 
 async function itunesSearch(query: string) {
@@ -87,14 +59,42 @@ async function itunesSearch(query: string) {
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   const type = request.nextUrl.searchParams.get("type") ?? "album";
+  // Client-side Spotify result passed in
+  const clientResults = request.nextUrl.searchParams.get("_client");
+
   if (!query) return NextResponse.json([]);
 
-  try {
-    const spotify = await spotifySearch(query, type);
-    if (spotify && spotify.length > 0) return NextResponse.json(spotify);
-    const itunes = await itunesSearch(query);
-    return NextResponse.json(itunes);
-  } catch {
-    return NextResponse.json([]);
+  // If client already fetched Spotify results, use those
+  if (clientResults) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(clientResults));
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return NextResponse.json(mapSpotifyAlbums(parsed));
+      }
+    } catch { /* ignore */ }
   }
+
+  // Try Spotify from server
+  try {
+    const token = await getSpotifyToken();
+    if (token) {
+      const spotifyType = type === "track" ? "track" : "album";
+      const res = await fetch(
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
+        { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
+      );
+      if (res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data) {
+          const items = type === "track" ? (data.tracks?.items ?? []) : (data.albums?.items ?? []);
+          const mapped = mapSpotifyAlbums(items);
+          if (mapped.length > 0) return NextResponse.json(mapped);
+        }
+      }
+    }
+  } catch { /* fall through to iTunes */ }
+
+  // Fallback: iTunes
+  const itunes = await itunesSearch(query);
+  return NextResponse.json(itunes);
 }

@@ -113,9 +113,34 @@ function ZoekenInner() {
     if (!q.trim()) return;
     setLoading(true);
     setSearched(true);
-    const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album`);
-    const data = await res.json();
-    setResults(data);
+    try {
+      // Try client-side Spotify first
+      let results = null;
+      try {
+        const tokenRes = await fetch("/api/spotify-token");
+        const { token } = await tokenRes.json();
+        if (token) {
+          const spotifyRes = await fetch(
+            `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=album&limit=10`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          if (spotifyRes.ok) {
+            const spotifyData = await spotifyRes.json();
+            const items = spotifyData.albums?.items ?? [];
+            if (items.length > 0) {
+              const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album&_client=${encodeURIComponent(JSON.stringify(items))}`);
+              results = await res.json();
+            }
+          }
+        }
+      } catch { /* fall through */ }
+
+      if (!results || !results.length) {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&type=album`);
+        results = await res.json();
+      }
+      setResults(Array.isArray(results) ? results : []);
+    } catch { setResults([]); }
     setLoading(false);
   }
 
