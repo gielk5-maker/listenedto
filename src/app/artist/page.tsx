@@ -62,14 +62,26 @@ function ArtistPageInner() {
 
       setArtistInfo(spotifyData.artist);
 
+      // Normalize album name: strip parenthetical suffixes for matching
+      function normalize(name: string) {
+        return name.toLowerCase()
+          .replace(/\s*[\[(][^\])]*(explicit|deluxe|remaster|edition|version|bonus|anniversary|expanded)[^\])]*[\])]/gi, "")
+          .replace(/\s*[\[(][^\])]*[\])]/gi, "")
+          .trim();
+      }
+
       // Build rating map from DB + calculate overall avg
       const ratingMap: Record<string, { total: number; count: number }> = {};
       const allRatings = ratingsRes.data ?? [];
       allRatings.forEach(r => {
-        const key = r.album_name.toLowerCase();
-        if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
-        ratingMap[key].total += r.rating;
-        ratingMap[key].count++;
+        // Store under both exact and normalized key
+        const exact = r.album_name.toLowerCase();
+        const norm = normalize(r.album_name);
+        for (const key of [exact, norm]) {
+          if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
+          ratingMap[key].total += r.rating;
+          ratingMap[key].count++;
+        }
       });
 
       if (allRatings.length > 0) {
@@ -79,8 +91,9 @@ function ArtistPageInner() {
 
       // Merge
       const merged: Album[] = spotifyData.albums.map((a: Album) => {
-        const key = a.name.toLowerCase();
-        const stats = ratingMap[key];
+        const exact = a.name.toLowerCase();
+        const norm = normalize(a.name);
+        const stats = ratingMap[exact] ?? ratingMap[norm];
         return {
           ...a,
           avg: stats ? Math.round((stats.total / stats.count) * 10) / 10 : undefined,
