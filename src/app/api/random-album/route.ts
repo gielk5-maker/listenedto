@@ -3,13 +3,14 @@ import { getSpotifyToken } from "@/lib/spotify";
 
 export const runtime = "nodejs";
 
-// A pool of well-known search seeds to get varied popular albums
+// year: filter works reliably for album search; genre: does NOT work for albums
 const SEEDS = [
-  "year:2020-2024", "year:2015-2019", "year:2010-2014", "year:2000-2009",
-  "year:1990-1999", "year:1980-1989", "year:1970-1979",
-  "genre:pop", "genre:rock", "genre:hip-hop", "genre:jazz",
-  "genre:electronic", "genre:indie", "genre:soul", "genre:r&b",
-  "genre:metal", "genre:classical", "genre:folk", "genre:punk",
+  "year:2024", "year:2023", "year:2022", "year:2021", "year:2020",
+  "year:2019", "year:2018", "year:2017", "year:2016", "year:2015",
+  "year:2010-2014", "year:2005-2009", "year:2000-2004",
+  "year:1995-1999", "year:1990-1994", "year:1985-1989", "year:1980-1984",
+  "year:1970-1979", "year:1960-1969",
+  "album", "music", "love", "life", "night", "soul", "world",
 ];
 
 export async function GET() {
