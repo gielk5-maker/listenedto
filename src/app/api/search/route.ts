@@ -75,19 +75,17 @@ export async function GET(request: NextRequest) {
         `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
         { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
-      const text = await res.text();
       if (res.ok) {
-        const data = JSON.parse(text);
-        const mapped = mapSpotifyAlbums(data.albums?.items ?? []);
-        if (mapped.length > 0) return NextResponse.json(mapped);
-        return NextResponse.json({ _debug: "spotify ok but empty", items: data.albums?.items?.length, text: text.slice(0, 200) });
-      } else {
-        return NextResponse.json({ _debug: "spotify not ok", status: res.status, text: text.slice(0, 200) });
+        const data = await res.json().catch(() => null);
+        if (data) {
+          const mapped = mapSpotifyAlbums(data.albums?.items ?? []);
+          if (mapped.length > 0) return NextResponse.json(mapped);
+        }
       }
-    } else {
-      return NextResponse.json({ _debug: "no token" });
     }
-  } catch (e) {
-    return NextResponse.json({ _debug: "exception", msg: String(e) });
-  }
+  } catch { /* fall through */ }
+
+  // Fallback: iTunes
+  const cleanQuery = query.replace(/\./g, " ").trim();
+  return NextResponse.json(await itunesSearch(cleanQuery));
 }
