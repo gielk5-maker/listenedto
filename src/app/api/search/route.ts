@@ -30,6 +30,14 @@ export async function GET(request: NextRequest) {
     `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=${spotifyType}&limit=10`,
     { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
   );
+
+  if (!res.ok) {
+    if (res.status === 429) {
+      return NextResponse.json([], { status: 200 }); // Rate limited — return empty, client retries on next keystroke
+    }
+    return NextResponse.json([], { status: 200 });
+  }
+
   const data = await res.json();
 
   if (type === "track") {
