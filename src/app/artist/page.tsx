@@ -41,7 +41,8 @@ function ArtistPageInner() {
   const artistName = params.get("name") ?? "";
   const supabase = createClient();
 
-  const [artistInfo, setArtistInfo] = useState<{ name: string; image: string | null; followers: number } | null>(null);
+  const [artistInfo, setArtistInfo] = useState<{ name: string; image: string | null } | null>(null);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,14 +62,20 @@ function ArtistPageInner() {
 
       setArtistInfo(spotifyData.artist);
 
-      // Build rating map from DB
+      // Build rating map from DB + calculate overall avg
       const ratingMap: Record<string, { total: number; count: number }> = {};
-      (ratingsRes.data ?? []).forEach(r => {
+      const allRatings = ratingsRes.data ?? [];
+      allRatings.forEach(r => {
         const key = r.album_name.toLowerCase();
         if (!ratingMap[key]) ratingMap[key] = { total: 0, count: 0 };
         ratingMap[key].total += r.rating;
         ratingMap[key].count++;
       });
+
+      if (allRatings.length > 0) {
+        const total = allRatings.reduce((s, r) => s + r.rating, 0);
+        setAvgRating(Math.round((total / allRatings.length) * 10) / 10);
+      }
 
       // Merge
       const merged: Album[] = spotifyData.albums.map((a: Album) => {
@@ -116,7 +123,10 @@ function ArtistPageInner() {
             )}
             <div>
               <h1 className="text-2xl font-bold">{artistInfo.name}</h1>
-              <p className="text-stone-500 text-sm mt-1">{artistInfo.followers.toLocaleString()} followers on Spotify</p>
+              {avgRating !== null
+                ? <p className="text-[var(--accent)] text-sm font-medium mt-1">★ {avgRating} avg. rating</p>
+                : <p className="text-stone-600 text-sm mt-1">No ratings yet</p>
+              }
             </div>
           </div>
         )}
