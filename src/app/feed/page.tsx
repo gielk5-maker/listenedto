@@ -6,6 +6,7 @@ import LogoutButton from "@/components/LogoutButton";
 import FeedZoekbalk from "@/components/FeedZoekbalk";
 import FeedKaart from "@/components/FeedKaart";
 import ThemeApplicator from "@/components/ThemeApplicator";
+import PollKaart from "@/components/PollKaart";
 
 export default async function FeedPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab } = await searchParams;
@@ -210,6 +211,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Feed kolom */}
           <div className="w-full lg:max-w-xl">
+            <PollKaart userId={user.id} />
 
             {activeTab === "friends" ? (
               !feedRatings || feedRatings.length === 0 ? (
