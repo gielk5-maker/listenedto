@@ -96,93 +96,63 @@ export default function PollKaart({ userId }: { userId: string }) {
   useEffect(() => {
     async function findEligiblePoll() {
       const daysSinceEpoch = Math.floor(Date.now() / 86400000);
+      const p = POLLS[daysSinceEpoch % POLLS.length];
 
-      const [ratingsRes, votesRes, profileRes] = await Promise.all([
-        supabase.from("ratings").select("album_name, artist_name").eq("user_id", userId),
+      const [votesRes, profileRes] = await Promise.all([
         supabase.from("poll_votes").select("poll_id, vote").eq("user_id", userId),
         supabase.from("profiles").select("username").eq("id", userId).single(),
       ]);
 
       setUsername(profileRes.data?.username ?? "");
 
-      const listenedArtists = new Set((ratingsRes.data ?? []).map(r => r.artist_name.toLowerCase()));
-      const listenedAlbums = new Set((ratingsRes.data ?? []).map(r => r.album_name.toLowerCase()));
       const votedMap: Record<string, string> = {};
       (votesRes.data ?? []).forEach(v => { votedMap[v.poll_id] = v.vote; });
 
-      function hasArtist(artist: string) {
-        const a = artist.toLowerCase();
-        for (const s of listenedArtists) {
-          if (s === a || s.includes(a) || a.includes(s) || s.startsWith(a.split(" ")[0])) return true;
-        }
-        return false;
+      setPoll(p);
+
+      // Fetch images
+      if (p.type === "artist_vs") {
+        const [imgA, imgB] = await Promise.all([fetchArtistImage(p.option_a!), fetchArtistImage(p.option_b!)]);
+        setImageA(imgA); setImageB(imgB);
+      } else if (p.type === "album_vs") {
+        const [imgA, imgB] = await Promise.all([fetchAlbumImage(p.option_a!, p.artist_a!), fetchAlbumImage(p.option_b!, p.artist_b!)]);
+        setImageA(imgA); setImageB(imgB);
       }
 
-      function hasAlbum(album: string) {
-        const a = album.toLowerCase().replace(/\s*[\[(][^\])]*[\])]/g, "").trim();
-        for (const s of listenedAlbums) {
-          const sn = s.replace(/\s*[\[(][^\])]*[\])]/g, "").trim();
-          if (sn === a || sn.includes(a) || a.includes(sn)) return true;
-        }
-        return false;
-      }
+      // Load votes + comments
+      const [allVotesRes, commentsRes] = await Promise.all([
+        supabase.from("poll_votes").select("vote").eq("poll_id", p.id),
+        supabase.from("poll_comments").select("id, user_id, content, created_at").eq("poll_id", p.id).order("created_at", { ascending: true }),
+      ]);
+      const a = (allVotesRes.data ?? []).filter(v => v.vote === "a").length;
+      const b = (allVotesRes.data ?? []).filter(v => v.vote === "b").length;
+      setCounts({ a, b });
+      if (votedMap[p.id]) setVoted(votedMap[p.id]);
 
-      for (let i = 0; i < POLLS.length; i++) {
-        const p = POLLS[(daysSinceEpoch + i) % POLLS.length];
+      // Get usernames for comments
+      const commentData = commentsRes.data ?? [];
+      const userIds = [...new Set(commentData.map(c => c.user_id))];
+      const commentIds = commentData.map(c => c.id);
 
-        let eligible = false;
-        if (p.type === "hot_take") eligible = true;
-        else if (p.type === "artist_vs") eligible = hasArtist(p.option_a!) && hasArtist(p.option_b!);
-        else if (p.type === "album_vs") eligible = hasAlbum(p.option_a!) && hasAlbum(p.option_b!);
+      const [profilesRes, likesRes] = await Promise.all([
+        userIds.length > 0 ? supabase.from("profiles").select("id, username").in("id", userIds) : Promise.resolve({ data: [] }),
+        commentIds.length > 0 ? supabase.from("poll_comment_likes").select("comment_id, user_id").in("comment_id", commentIds) : Promise.resolve({ data: [] }),
+      ]);
 
-        if (!eligible) continue;
+      const profileMap: Record<string, string> = {};
+      (profilesRes.data ?? []).forEach(p => { profileMap[p.id] = p.username; });
 
-        setPoll(p);
+      const allLikes = likesRes.data ?? [];
+      setComments(commentData.map(c => ({
+        id: c.id,
+        user_id: c.user_id,
+        username: profileMap[c.user_id] ?? "?",
+        content: c.content,
+        created_at: c.created_at,
+        likeCount: allLikes.filter(l => l.comment_id === c.id).length,
+        liked: allLikes.some(l => l.comment_id === c.id && l.user_id === userId),
+      })));
 
-        // Fetch images
-        if (p.type === "artist_vs") {
-          const [imgA, imgB] = await Promise.all([fetchArtistImage(p.option_a!), fetchArtistImage(p.option_b!)]);
-          setImageA(imgA); setImageB(imgB);
-        } else if (p.type === "album_vs") {
-          const [imgA, imgB] = await Promise.all([fetchAlbumImage(p.option_a!, p.artist_a!), fetchAlbumImage(p.option_b!, p.artist_b!)]);
-          setImageA(imgA); setImageB(imgB);
-        }
-
-        // Load votes + comments
-        const [allVotesRes, commentsRes] = await Promise.all([
-          supabase.from("poll_votes").select("vote").eq("poll_id", p.id),
-          supabase.from("poll_comments").select("id, user_id, content, created_at").eq("poll_id", p.id).order("created_at", { ascending: true }),
-        ]);
-        const a = (allVotesRes.data ?? []).filter(v => v.vote === "a").length;
-        const b = (allVotesRes.data ?? []).filter(v => v.vote === "b").length;
-        setCounts({ a, b });
-        if (votedMap[p.id]) setVoted(votedMap[p.id]);
-
-        // Get usernames for comments
-        const commentData = commentsRes.data ?? [];
-        const userIds = [...new Set(commentData.map(c => c.user_id))];
-        const commentIds = commentData.map(c => c.id);
-
-        const [profilesRes, likesRes] = await Promise.all([
-          userIds.length > 0 ? supabase.from("profiles").select("id, username").in("id", userIds) : Promise.resolve({ data: [] }),
-          commentIds.length > 0 ? supabase.from("poll_comment_likes").select("comment_id, user_id").in("comment_id", commentIds) : Promise.resolve({ data: [] }),
-        ]);
-
-        const profileMap: Record<string, string> = {};
-        (profilesRes.data ?? []).forEach(p => { profileMap[p.id] = p.username; });
-
-        const allLikes = likesRes.data ?? [];
-        setComments(commentData.map(c => ({
-          id: c.id,
-          user_id: c.user_id,
-          username: profileMap[c.user_id] ?? "?",
-          content: c.content,
-          created_at: c.created_at,
-          likeCount: allLikes.filter(l => l.comment_id === c.id).length,
-          liked: allLikes.some(l => l.comment_id === c.id && l.user_id === userId),
-        })));
-        break;
-      }
       setLoading(false);
     }
     findEligiblePoll();
