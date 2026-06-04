@@ -152,17 +152,17 @@ function ZoekenInner() {
           <Logo />
           <span>ListenedTo</span>
         </Link>
-        <form onSubmit={handleSubmit} className="flex-1 max-w-sm flex gap-2">
+        <form onSubmit={handleSubmit} className="flex-1 max-w-sm">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search an album or artist..."
-            className="flex-1 bg-stone-900 border border-stone-700/60 rounded-xl px-3 py-2 text-sm text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
+            className="w-full bg-stone-900 border border-stone-700/60 rounded-xl px-3 py-2 text-sm text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
             autoFocus
           />
-          <RandomAlbumButton />
         </form>
+        <RandomAlbumButton />
         <nav className="flex items-center gap-4 ml-auto shrink-0">
           <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link>

@@ -32,6 +32,7 @@ export default function RandomAlbumButton() {
       onClick={go}
       disabled={loading}
       title="Random album"
+      type="button"
       className={`flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-xl border transition-colors disabled:opacity-50 ${error ? "bg-red-900/40 border-red-700/60" : "bg-stone-800 hover:bg-stone-700 border-stone-700/60"}`}
     >
       <span className={loading ? "animate-spin inline-block" : ""}>{error ? "✕" : "🎲"}</span>
