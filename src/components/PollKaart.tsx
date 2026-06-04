@@ -72,7 +72,7 @@ async function fetchAlbumImage(album: string, artist: string): Promise<string | 
   } catch { return null; }
 }
 
-type Comment = { id: string; username: string; content: string; created_at: string };
+type Comment = { id: string; user_id: string; username: string; content: string; created_at: string };
 
 export default function PollKaart({ userId }: { userId: string }) {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -86,6 +86,10 @@ export default function PollKaart({ userId }: { userId: string }) {
   const [comment, setComment] = useState("");
   const [posting, setPosting] = useState(false);
   const [username, setUsername] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [commentOpen, setCommentOpen] = useState(false);
   const supabase = createClient();
   const commentRef = useRef<HTMLInputElement>(null);
 
@@ -159,7 +163,7 @@ export default function PollKaart({ userId }: { userId: string }) {
         const profilesRes = userIds.length > 0 ? await supabase.from("profiles").select("id, username").in("id", userIds) : { data: [] };
         const profileMap: Record<string, string> = {};
         (profilesRes.data ?? []).forEach(p => { profileMap[p.id] = p.username; });
-        setComments((commentsRes.data ?? []).map(c => ({ id: c.id, username: profileMap[c.user_id] ?? "?", content: c.content, created_at: c.created_at })));
+        setComments((commentsRes.data ?? []).map(c => ({ id: c.id, user_id: c.user_id, username: profileMap[c.user_id] ?? "?", content: c.content, created_at: c.created_at })));
         break;
       }
       setLoading(false);
@@ -184,7 +188,7 @@ export default function PollKaart({ userId }: { userId: string }) {
     if (!comment.trim() || !poll || posting) return;
     setPosting(true);
     const { data } = await supabase.from("poll_comments").insert({ user_id: userId, poll_id: poll.id, content: comment.trim() }).select("id, content, created_at").single();
-    if (data) setComments(prev => [...prev, { id: data.id, username, content: data.content, created_at: data.created_at }]);
+    if (data) setComments(prev => [...prev, { id: data.id, user_id: userId, username, content: data.content, created_at: data.created_at }]);
     setComment("");
     setPosting(false);
   }
@@ -252,33 +256,84 @@ export default function PollKaart({ userId }: { userId: string }) {
         </div>
       )}
 
-      {/* Comments */}
-      <div className="border-t border-stone-800/60 pt-4 space-y-3">
-        {comments.length > 0 && (
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {comments.map(c => (
-              <div key={c.id} className="flex gap-2">
-                <span className="text-[var(--accent)] text-xs font-semibold flex-shrink-0">{c.username}</span>
-                <span className="text-stone-400 text-xs">{c.content}</span>
-              </div>
-            ))}
-          </div>
-        )}
-        <form onSubmit={postComment} className="flex gap-2">
-          <input
-            ref={commentRef}
-            value={comment}
-            onChange={e => setComment(e.target.value)}
-            placeholder="Add a comment..."
-            maxLength={200}
-            className="flex-1 bg-stone-800 border border-stone-700/60 rounded-xl px-3 py-2 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-xs"
-          />
-          <button type="submit" disabled={posting || !comment.trim()}
-            className="px-3 py-2 bg-[var(--accent)] hover:opacity-90 disabled:opacity-40 text-[var(--accent-text)] font-bold rounded-xl text-xs transition-opacity flex-shrink-0">
-            Post
-          </button>
-        </form>
+      {/* Comments toggle + count */}
+      <div className="border-t border-stone-800/60 pt-3 flex items-center gap-4">
+        <button
+          onClick={() => setCommentOpen(v => !v)}
+          className={`flex items-center gap-1.5 text-sm transition-colors ${commentOpen ? "text-[var(--accent)]" : "text-stone-600 hover:text-stone-300"}`}
+        >
+          <span className="text-base">💬</span>
+          {comments.length > 0 && <span className="text-xs">{comments.length}</span>}
+        </button>
       </div>
+
+      {/* Comments section */}
+      {commentOpen && (
+        <div className="space-y-3">
+          {comments.length > 0 && (
+            <div className="space-y-2.5 max-h-48 overflow-y-auto">
+              {comments.map(c => (
+                <div key={c.id} className="flex gap-2.5 items-start">
+                  <span className="text-[var(--accent)] text-xs font-semibold flex-shrink-0 mt-0.5">{c.username}</span>
+                  <div className="flex-1 min-w-0">
+                    {editingId === c.id ? (
+                      <form onSubmit={async e => {
+                        e.preventDefault();
+                        if (!editingText.trim()) return;
+                        setComments(prev => prev.map(x => x.id === c.id ? { ...x, content: editingText.trim() } : x));
+                        await supabase.from("poll_comments").update({ content: editingText.trim() }).eq("id", c.id).eq("user_id", userId);
+                        setEditingId(null);
+                      }} className="flex gap-1.5">
+                        <input autoFocus value={editingText} onChange={e => setEditingText(e.target.value)}
+                          className="flex-1 bg-stone-800 border border-stone-700/50 rounded-lg px-2 py-0.5 text-xs text-stone-200 focus:outline-none focus:border-[var(--accent)]" />
+                        <button type="submit" className="text-[var(--accent)] text-xs font-semibold">Save</button>
+                        <button type="button" onClick={() => setEditingId(null)} className="text-stone-600 text-xs">Cancel</button>
+                      </form>
+                    ) : (
+                      <span className="text-stone-400 text-xs">{c.content}</span>
+                    )}
+                  </div>
+                  {c.user_id === userId && editingId !== c.id && (
+                    <div className="flex gap-1.5 flex-shrink-0 items-center">
+                      <button onClick={() => { setEditingId(c.id); setEditingText(c.content); setConfirmDeleteId(null); }}
+                        className="text-stone-700 hover:text-stone-400 text-xs transition-colors">Edit</button>
+                      {confirmDeleteId === c.id ? (
+                        <>
+                          <button onClick={async () => {
+                            setComments(prev => prev.filter(x => x.id !== c.id));
+                            await supabase.from("poll_comments").delete().eq("id", c.id).eq("user_id", userId);
+                            setConfirmDeleteId(null);
+                          }} className="text-red-400 text-xs font-semibold">Confirm</button>
+                          <button onClick={() => setConfirmDeleteId(null)} className="text-stone-600 text-xs">Cancel</button>
+                        </>
+                      ) : (
+                        <button onClick={() => setConfirmDeleteId(c.id)} className="text-stone-700 hover:text-red-400 text-xs transition-colors">Delete</button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+          <form onSubmit={postComment} className="flex gap-2.5 items-center">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-[10px] font-bold text-[var(--accent-text)] flex-shrink-0">
+              {username[0]?.toUpperCase()}
+            </div>
+            <input
+              ref={commentRef}
+              value={comment}
+              onChange={e => setComment(e.target.value)}
+              placeholder="Add a comment..."
+              maxLength={200}
+              className="flex-1 bg-stone-800 border border-stone-700/50 rounded-xl px-3 py-1.5 text-sm text-stone-200 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
+            />
+            <button type="submit" disabled={posting || !comment.trim()}
+              className="text-[var(--accent)] text-sm font-semibold disabled:opacity-30 hover:opacity-80 transition-opacity">
+              Send
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
