@@ -72,7 +72,7 @@ async function fetchAlbumImage(album: string, artist: string): Promise<string | 
   } catch { return null; }
 }
 
-type Comment = { id: string; user_id: string; username: string; content: string; created_at: string };
+type Comment = { id: string; user_id: string; username: string; content: string; created_at: string; likeCount: number; liked: boolean };
 
 export default function PollKaart({ userId }: { userId: string }) {
   const [poll, setPoll] = useState<Poll | null>(null);
@@ -159,11 +159,28 @@ export default function PollKaart({ userId }: { userId: string }) {
         if (votedMap[p.id]) setVoted(votedMap[p.id]);
 
         // Get usernames for comments
-        const userIds = [...new Set((commentsRes.data ?? []).map(c => c.user_id))];
-        const profilesRes = userIds.length > 0 ? await supabase.from("profiles").select("id, username").in("id", userIds) : { data: [] };
+        const commentData = commentsRes.data ?? [];
+        const userIds = [...new Set(commentData.map(c => c.user_id))];
+        const commentIds = commentData.map(c => c.id);
+
+        const [profilesRes, likesRes] = await Promise.all([
+          userIds.length > 0 ? supabase.from("profiles").select("id, username").in("id", userIds) : Promise.resolve({ data: [] }),
+          commentIds.length > 0 ? supabase.from("poll_comment_likes").select("comment_id, user_id").in("comment_id", commentIds) : Promise.resolve({ data: [] }),
+        ]);
+
         const profileMap: Record<string, string> = {};
         (profilesRes.data ?? []).forEach(p => { profileMap[p.id] = p.username; });
-        setComments((commentsRes.data ?? []).map(c => ({ id: c.id, user_id: c.user_id, username: profileMap[c.user_id] ?? "?", content: c.content, created_at: c.created_at })));
+
+        const allLikes = likesRes.data ?? [];
+        setComments(commentData.map(c => ({
+          id: c.id,
+          user_id: c.user_id,
+          username: profileMap[c.user_id] ?? "?",
+          content: c.content,
+          created_at: c.created_at,
+          likeCount: allLikes.filter(l => l.comment_id === c.id).length,
+          liked: allLikes.some(l => l.comment_id === c.id && l.user_id === userId),
+        })));
         break;
       }
       setLoading(false);
@@ -188,9 +205,21 @@ export default function PollKaart({ userId }: { userId: string }) {
     if (!comment.trim() || !poll || posting) return;
     setPosting(true);
     const { data } = await supabase.from("poll_comments").insert({ user_id: userId, poll_id: poll.id, content: comment.trim() }).select("id, content, created_at").single();
-    if (data) setComments(prev => [...prev, { id: data.id, user_id: userId, username, content: data.content, created_at: data.created_at }]);
+    if (data) setComments(prev => [...prev, { id: data.id, user_id: userId, username, content: data.content, created_at: data.created_at, likeCount: 0, liked: false }]);
     setComment("");
     setPosting(false);
+  }
+
+  async function toggleCommentLike(commentId: string, wasLiked: boolean) {
+    setComments(prev => prev.map(c => c.id === commentId
+      ? { ...c, liked: !wasLiked, likeCount: wasLiked ? c.likeCount - 1 : c.likeCount + 1 }
+      : c
+    ));
+    if (wasLiked) {
+      await supabase.from("poll_comment_likes").delete().eq("comment_id", commentId).eq("user_id", userId);
+    } else {
+      await supabase.from("poll_comment_likes").insert({ comment_id: commentId, user_id: userId });
+    }
   }
 
   if (loading || !poll) return null;
@@ -293,8 +322,16 @@ export default function PollKaart({ userId }: { userId: string }) {
                       <span className="text-stone-400 text-xs">{c.content}</span>
                     )}
                   </div>
+                  <div className="flex gap-2 flex-shrink-0 items-center ml-auto">
+                    <button
+                      onClick={() => toggleCommentLike(c.id, c.liked)}
+                      className={`flex items-center gap-1 text-xs transition-colors ${c.liked ? "text-red-400" : "text-stone-700 hover:text-red-400"}`}
+                    >
+                      <span>{c.liked ? "♥" : "♡"}</span>
+                      {c.likeCount > 0 && <span>{c.likeCount}</span>}
+                    </button>
                   {c.user_id === userId && editingId !== c.id && (
-                    <div className="flex gap-1.5 flex-shrink-0 items-center">
+                    <div className="flex gap-1.5 items-center">
                       <button onClick={() => { setEditingId(c.id); setEditingText(c.content); setConfirmDeleteId(null); }}
                         className="text-stone-700 hover:text-stone-400 text-xs transition-colors">Edit</button>
                       {confirmDeleteId === c.id ? (
@@ -311,6 +348,7 @@ export default function PollKaart({ userId }: { userId: string }) {
                       )}
                     </div>
                   )}
+                  </div>
                 </div>
               ))}
             </div>
