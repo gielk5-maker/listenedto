@@ -48,6 +48,22 @@ export async function plaatsComment(ratingId: string, content: string) {
   revalidatePath("/feed");
 }
 
+export async function verwijderComment(commentId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+  await supabase.from("comments").delete().eq("id", commentId).eq("user_id", user.id);
+  revalidatePath("/feed");
+}
+
+export async function bewerkComment(commentId: string, content: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || !content.trim()) return;
+  await supabase.from("comments").update({ content: content.trim() }).eq("id", commentId).eq("user_id", user.id);
+  revalidatePath("/feed");
+}
+
 export async function volg(formData: FormData) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

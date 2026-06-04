@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SessionGuard from "@/components/SessionGuard";
 
 export const metadata: Metadata = {
   title: "ListenedTo",
@@ -27,6 +28,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <SessionGuard />
         {children}
       </body>
     </html>

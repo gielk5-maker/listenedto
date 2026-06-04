@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import Logo from "@/components/Logo";
 
 const GREEN_VARS: Record<string, string> = {
@@ -12,28 +11,10 @@ const GREEN_VARS: Record<string, string> = {
 };
 
 export default function HomePage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     const r = document.documentElement;
     for (const [k, v] of Object.entries(GREEN_VARS)) r.style.setProperty(k, v);
   }, []);
-
-  async function goToRandomAlbum() {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/random-album");
-      if (!res.ok) throw new Error();
-      const { name, artist, image, url } = await res.json();
-      const params = new URLSearchParams({ name, artist });
-      if (image) params.set("image", image);
-      if (url) params.set("url", url);
-      router.push(`/album?${params.toString()}`);
-    } catch {
-      setLoading(false);
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
@@ -59,16 +40,6 @@ export default function HomePage() {
           >
             Log in
           </Link>
-        </div>
-        <div className="mt-4 flex justify-center">
-          <button
-            onClick={goToRandomAlbum}
-            disabled={loading}
-            className="flex items-center gap-2 text-stone-400 hover:text-stone-200 transition-colors text-sm disabled:opacity-50"
-          >
-            <span className={loading ? "animate-spin" : ""}>🎲</span>
-            {loading ? "Zoeken…" : "Random album"}
-          </button>
         </div>
       </div>
     </div>

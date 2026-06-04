@@ -53,10 +53,11 @@ export default function LoginPage() {
       return;
     }
 
-    if (!remember) {
-      const keys = Object.keys(localStorage).filter(k => k.startsWith("sb-"));
-      keys.forEach(k => localStorage.removeItem(k));
-      sessionStorage.setItem("lt-session", "1");
+    if (remember) {
+      localStorage.setItem("lt-remember", "1");
+    } else {
+      localStorage.removeItem("lt-remember");
+      window.addEventListener("beforeunload", () => { supabase.auth.signOut(); }, { once: true });
     }
 
     // Fetch saved theme from profile and apply it

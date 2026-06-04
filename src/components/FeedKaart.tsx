@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import Sterren from "@/components/Sterren";
 import Link from "next/link";
 import AlbumCover from "@/components/AlbumCover";
-import { toggleLike, toggleCommentLike, plaatsComment } from "@/app/actions/social";
+import { toggleLike, toggleCommentLike, plaatsComment, verwijderComment, bewerkComment } from "@/app/actions/social";
 
 type Comment = {
   id: string;
@@ -48,6 +48,8 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
   const [comments, setComments] = useState<Comment[]>(initComments);
   const [commentOpen, setCommentOpen] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
   const [, startTransition] = useTransition();
 
   function handleLike() {
@@ -179,15 +181,46 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
                         {new Date(c.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                       </span>
                     </div>
-                    <p className="text-sm text-stone-400 mt-0.5">{c.content}</p>
+                    {editingCommentId === c.id ? (
+                      <form onSubmit={e => {
+                        e.preventDefault();
+                        if (!editingText.trim()) return;
+                        setComments(prev => prev.map(x => x.id === c.id ? { ...x, content: editingText.trim() } : x));
+                        startTransition(() => bewerkComment(c.id, editingText.trim()));
+                        setEditingCommentId(null);
+                      }} className="flex gap-1.5 mt-1">
+                        <input
+                          autoFocus
+                          value={editingText}
+                          onChange={e => setEditingText(e.target.value)}
+                          className="flex-1 bg-stone-800 border border-stone-700/50 rounded-lg px-2 py-1 text-sm text-stone-200 focus:outline-none focus:border-[var(--accent)]"
+                        />
+                        <button type="submit" className="text-[var(--accent)] text-xs font-semibold">Save</button>
+                        <button type="button" onClick={() => setEditingCommentId(null)} className="text-stone-600 text-xs">Cancel</button>
+                      </form>
+                    ) : (
+                      <p className="text-sm text-stone-400 mt-0.5">{c.content}</p>
+                    )}
                   </div>
-                  <button
-                    onClick={() => handleCommentLike(c.id, c.liked)}
-                    className={`flex items-center gap-1 text-xs flex-shrink-0 mt-1 transition-colors ${c.liked ? "text-red-400" : "text-stone-700 hover:text-red-400"}`}
-                  >
-                    <span>{c.liked ? "♥" : "♡"}</span>
-                    {c.likeCount > 0 && <span>{c.likeCount}</span>}
-                  </button>
+                  <div className="flex items-center gap-2 flex-shrink-0 mt-1">
+                    {c.user_id === eigenUserId && editingCommentId !== c.id && (
+                      <div className="flex gap-1.5">
+                        <button onClick={() => { setEditingCommentId(c.id); setEditingText(c.content); }}
+                          className="text-stone-700 hover:text-stone-400 text-xs transition-colors">Edit</button>
+                        <button onClick={() => {
+                          setComments(prev => prev.filter(x => x.id !== c.id));
+                          startTransition(() => verwijderComment(c.id));
+                        }} className="text-stone-700 hover:text-red-400 text-xs transition-colors">Delete</button>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => handleCommentLike(c.id, c.liked)}
+                      className={`flex items-center gap-1 text-xs transition-colors ${c.liked ? "text-red-400" : "text-stone-700 hover:text-red-400"}`}
+                    >
+                      <span>{c.liked ? "♥" : "♡"}</span>
+                      {c.likeCount > 0 && <span>{c.likeCount}</span>}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
