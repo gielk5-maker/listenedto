@@ -9,9 +9,7 @@ export default async function AdminFeedbackPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  if (user.email !== ADMIN_EMAIL) {
-    return <div className="min-h-screen bg-stone-950 text-stone-50 flex items-center justify-center"><p>email: {user.email ?? "undefined"}</p></div>;
-  }
+  if (user.email !== ADMIN_EMAIL) redirect("/feed");
 
   const { data: feedback } = await supabase
     .from("feedback")
