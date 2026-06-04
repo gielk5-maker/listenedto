@@ -19,13 +19,19 @@ export async function searchArtists(query: string): Promise<ArtistResult[]> {
     const { token } = await tokenRes.json();
     if (!token) return [];
     const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=3`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=artist&limit=10`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) return [];
     const data = await res.json();
     return (data.artists?.items ?? [])
-      .filter((a: Record<string, unknown>) => !nietLatijn.test(a.name as string))
+      .filter((a: Record<string, unknown>) => {
+        if (nietLatijn.test(a.name as string)) return false;
+        const followers = (a.followers as Record<string, number>)?.total ?? 0;
+        const popularity = (a.popularity as number) ?? 0;
+        // Filter out artists with no followers and no popularity — these have no releases
+        return followers > 0 || popularity > 0;
+      })
       .slice(0, 3)
       .map((a: Record<string, unknown>) => ({
         name: a.name as string,
