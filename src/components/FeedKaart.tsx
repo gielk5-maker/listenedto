@@ -50,6 +50,7 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
   const [commentText, setCommentText] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   function handleLike() {
@@ -204,13 +205,21 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0 mt-1">
                     {c.user_id === eigenUserId && editingCommentId !== c.id && (
-                      <div className="flex gap-1.5">
-                        <button onClick={() => { setEditingCommentId(c.id); setEditingText(c.content); }}
+                      <div className="flex gap-1.5 items-center">
+                        <button onClick={() => { setEditingCommentId(c.id); setEditingText(c.content); setConfirmDeleteId(null); }}
                           className="text-stone-700 hover:text-stone-400 text-xs transition-colors">Edit</button>
-                        <button onClick={() => {
-                          setComments(prev => prev.filter(x => x.id !== c.id));
-                          startTransition(() => verwijderComment(c.id));
-                        }} className="text-stone-700 hover:text-red-400 text-xs transition-colors">Delete</button>
+                        {confirmDeleteId === c.id ? (
+                          <>
+                            <button onClick={() => {
+                              setComments(prev => prev.filter(x => x.id !== c.id));
+                              startTransition(() => verwijderComment(c.id));
+                              setConfirmDeleteId(null);
+                            }} className="text-red-400 text-xs font-semibold">Confirm</button>
+                            <button onClick={() => setConfirmDeleteId(null)} className="text-stone-600 text-xs">Cancel</button>
+                          </>
+                        ) : (
+                          <button onClick={() => setConfirmDeleteId(c.id)} className="text-stone-700 hover:text-red-400 text-xs transition-colors">Delete</button>
+                        )}
                       </div>
                     )}
                     <button
