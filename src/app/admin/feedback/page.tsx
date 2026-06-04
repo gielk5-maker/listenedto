@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-const ADMIN_USERNAME = "giel"; // jouw username
+const ADMIN_USERNAME = "gk";
 
 export default async function AdminFeedbackPage() {
   const supabase = await createClient();
