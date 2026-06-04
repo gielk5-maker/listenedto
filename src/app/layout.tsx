@@ -4,10 +4,17 @@ import SessionGuard from "@/components/SessionGuard";
 
 export const metadata: Metadata = {
   title: "ListenedTo",
-  description: "Track and rate the albums you've listened to.",
+  description: "Rate albums, track your listening history and discover what friends are into. Your personal music diary.",
   icons: {
     icon: "/favicon.png",
     apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    title: "ListenedTo",
+    description: "Rate albums, track your listening history and discover what friends are into. Your personal music diary.",
+    url: "https://listenedto.app",
+    siteName: "ListenedTo",
+    type: "website",
   },
 };
 
