@@ -5,6 +5,7 @@ import Logo from "@/components/Logo";
 import ThemeSettings from "@/components/ThemeSettings";
 import AccountSettings from "@/components/AccountSettings";
 import ProfileSettings from "@/components/ProfileSettings";
+import FeedbackForm from "@/components/FeedbackForm";
 
 export default async function InstellingenPage() {
   const supabase = await createClient();
@@ -47,6 +48,12 @@ export default async function InstellingenPage() {
         <section>
           <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Account</h2>
           <AccountSettings username={username} />
+        </section>
+
+        {/* Feedback */}
+        <section>
+          <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Feedback</h2>
+          <FeedbackForm userId={user.id} username={username} />
         </section>
       </main>
     </div>
