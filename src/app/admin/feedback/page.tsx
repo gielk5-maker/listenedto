@@ -2,15 +2,14 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-const ADMIN_USERNAME = "gk";
+const ADMIN_EMAIL = "gielkerstens3@gmail.com";
 
 export default async function AdminFeedbackPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data: profiel } = await supabase.from("profiles").select("username").eq("id", user.id).single();
-  if (profiel?.username !== ADMIN_USERNAME) redirect("/feed");
+  if (user.email !== ADMIN_EMAIL) redirect("/feed");
 
   const { data: feedback } = await supabase
     .from("feedback")
