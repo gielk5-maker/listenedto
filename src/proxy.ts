@@ -28,14 +28,8 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  // getClaims() validates the JWT and auto-refreshes when needed.
-  const allCookies = request.cookies.getAll();
-  const hasSbCookie = allCookies.some(c => c.name.startsWith("sb-"));
-  console.log("[proxy] path:", request.nextUrl.pathname, "| cookies:", allCookies.map(c => c.name).join(", ") || "NONE", "| hasSbCookie:", hasSbCookie);
-
-  const { data, error } = await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
-  console.log("[proxy] getClaims result:", user ? "user found" : "no user", error ? `error: ${error.message}` : "");
 
   const pathname = request.nextUrl.pathname;
   const isPublic =

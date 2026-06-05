@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { login } from "@/app/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 
 const GREEN_VARS: Record<string, string> = {
@@ -21,56 +21,55 @@ const ALL_THEMES: Record<string, Record<string, string>> = {
   purple: { "--accent":"#a855f7","--accent-hover":"#c084fc","--accent-dark":"#7e22ce","--accent-text":"#ffffff","--glow-1":"rgba(168,85,247,0.45)","--glow-2":"rgba(126,34,206,0.35)","--glow-3":"rgba(107,33,168,0.18)" },
 };
 
-function applyTheme(vars: Record<string, string>) {
-  const r = document.documentElement;
-  for (const [k, v] of Object.entries(vars)) r.style.setProperty(k, v);
-}
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  // Always show green on login page
   useEffect(() => {
-    applyTheme(GREEN_VARS);
+    const r = document.documentElement;
+    for (const [k, v] of Object.entries(GREEN_VARS)) r.style.setProperty(k, v);
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error, data } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setError("Incorrect email or password.");
-      setLoading(false);
-      return;
-    }
-
+    // Set remember preference before server action navigates away
     if (remember) {
       localStorage.setItem("lt-remember", "1");
     } else {
       localStorage.removeItem("lt-remember");
-      window.addEventListener("beforeunload", () => { supabase.auth.signOut(); }, { once: true });
     }
 
-    // Fetch saved theme from profile and apply it
-    if (data.user) {
-      const { data: profiel } = await supabase
-        .from("profiles").select("theme").eq("id", data.user.id).single();
-      const theme = profiel?.theme ?? "green";
-      const vars = ALL_THEMES[theme] ?? GREEN_VARS;
-      applyTheme(vars);
-      localStorage.setItem("theme", theme);
-    }
+    // Fetch theme client-side so we can store it before navigating
+    try {
+      const supabase = createClient();
+      const { data: authData } = await supabase.auth.signInWithPassword({ email, password });
+      if (authData?.user) {
+        const { data: profiel } = await supabase
+          .from("profiles").select("theme").eq("id", authData.user.id).single();
+        const theme = profiel?.theme ?? "green";
+        localStorage.setItem("theme", theme);
+        const vars = ALL_THEMES[theme] ?? GREEN_VARS;
+        const r = document.documentElement;
+        for (const [k, v] of Object.entries(vars)) r.style.setProperty(k, v);
+      }
+    } catch { /* ignore, server action handles auth */ }
 
-    window.location.href = "/feed";
+    // Server action sets cookies via Set-Cookie headers and redirects
+    const formData = new FormData();
+    formData.set("email", email);
+    formData.set("password", password);
+
+    startTransition(async () => {
+      const result = await login(formData);
+      if (result?.error) {
+        setError(result.error);
+      }
+    });
   }
 
   return (
@@ -116,9 +115,9 @@ export default function LoginPage() {
             <p className="text-red-400 text-sm bg-red-950/30 border border-red-900/50 rounded-xl px-4 py-3">{error}</p>
           )}
 
-          <button type="submit" disabled={loading}
+          <button type="submit" disabled={isPending}
             className="w-full bg-[var(--accent)] hover:opacity-90 disabled:opacity-50 text-[var(--accent-text)] font-bold rounded-xl px-4 py-3 transition-opacity mt-2">
-            {loading ? "Logging in..." : "Log in"}
+            {isPending ? "Logging in..." : "Log in"}
           </button>
         </form>
 
