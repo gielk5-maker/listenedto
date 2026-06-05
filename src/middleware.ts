@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll();
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -20,14 +20,18 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
+          Object.entries(headers ?? {}).forEach(([key, value]) =>
+            supabaseResponse.headers.set(key, value)
+          );
         },
       },
     }
   );
 
-  // getSession() auto-refreshes the access token using the refresh token.
-  // This is what keeps users logged in across visits.
-  const { data: { session } } = await supabase.auth.getSession();
+  // getClaims() validates the JWT and auto-refreshes when needed.
+  // Do NOT put any code between createServerClient and getClaims().
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims;
 
   const pathname = request.nextUrl.pathname;
   const isPublic =
@@ -36,8 +40,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/register") ||
     pathname.startsWith("/api/");
 
-  if (!session && !isPublic) {
-    return NextResponse.redirect(new URL("/login", request.url));
+  if (!user && !isPublic) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
