@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
-export async function login(formData: FormData) {
+export async function login(_state: { error: string } | null, formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -13,7 +13,7 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    return { error: "E-mail of wachtwoord klopt niet." };
+    return { error: "Incorrect email or password." };
   }
 
   revalidatePath("/", "layout");
