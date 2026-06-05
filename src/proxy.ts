@@ -28,8 +28,8 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user;
 
   const pathname = request.nextUrl.pathname;
   const isPublic =
