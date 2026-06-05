@@ -20,6 +20,13 @@ export default function HomePage() {
     const r = document.documentElement;
     for (const [k, v] of Object.entries(GREEN_VARS)) r.style.setProperty(k, v);
 
+    // Fast path: if remember-me is set, redirect immediately
+    if (localStorage.getItem("lt-remember")) {
+      router.replace("/feed");
+      return;
+    }
+
+    // Slow path: check session anyway (covers edge cases)
     createClient().auth.getSession().then(({ data: { session } }) => {
       if (session) {
         router.replace("/feed");
