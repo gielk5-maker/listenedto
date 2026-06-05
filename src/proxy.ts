@@ -28,8 +28,10 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   const user = session?.user;
+  const cookies = request.cookies.getAll().map(c => c.name);
+  console.log("[proxy]", request.nextUrl.pathname, "| cookies:", cookies.join(",") || "NONE", "| session:", !!session, "| user:", user?.email ?? "none", "| error:", sessionError?.message ?? "none");
 
   const pathname = request.nextUrl.pathname;
   const isPublic =
