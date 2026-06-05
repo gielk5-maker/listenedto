@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import { createClient } from "@/lib/supabase/client";
@@ -14,16 +14,22 @@ const GREEN_VARS: Record<string, string> = {
 
 export default function HomePage() {
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     const r = document.documentElement;
     for (const [k, v] of Object.entries(GREEN_VARS)) r.style.setProperty(k, v);
 
-    // Redirect logged-in users to feed
     createClient().auth.getSession().then(({ data: { session } }) => {
-      if (session) router.replace("/feed");
+      if (session) {
+        router.replace("/feed");
+      } else {
+        setChecking(false);
+      }
     });
   }, []);
+
+  if (checking) return <div className="min-h-screen bg-stone-950" />;
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
