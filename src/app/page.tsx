@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { createClient } from "@/lib/supabase/client";
 
 const GREEN_VARS: Record<string, string> = {
   "--accent": "#22c55e", "--accent-hover": "#4ade80", "--accent-dark": "#15803d",
@@ -11,9 +13,16 @@ const GREEN_VARS: Record<string, string> = {
 };
 
 export default function HomePage() {
+  const router = useRouter();
+
   useEffect(() => {
     const r = document.documentElement;
     for (const [k, v] of Object.entries(GREEN_VARS)) r.style.setProperty(k, v);
+
+    // Redirect logged-in users to feed
+    createClient().auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace("/feed");
+    });
   }, []);
 
   return (
