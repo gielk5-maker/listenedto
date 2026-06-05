@@ -25,7 +25,9 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // getSession() auto-refreshes the access token using the refresh token.
+  // This is what keeps users logged in across visits.
+  const { data: { session } } = await supabase.auth.getSession();
 
   const pathname = request.nextUrl.pathname;
   const isPublic =
@@ -34,7 +36,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/register") ||
     pathname.startsWith("/api/");
 
-  if (!user && !isPublic) {
+  if (!session && !isPublic) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
