@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { logConcert } from "@/app/actions/concert";
+import DatePicker from "@/components/DatePicker";
 
 function StarRating({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const [hover, setHover] = useState<number | null>(null);
@@ -102,8 +103,7 @@ function LoggenInner() {
 
             <div>
               <label className="block text-xs text-stone-500 mb-1.5">Date *</label>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-4 py-3 text-stone-50 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm" />
+              <DatePicker value={date} onChange={setDate} />
             </div>
           </div>
 
