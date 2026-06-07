@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
 import FeedZoekbalk from "@/components/FeedZoekbalk";
 import FeedKaart from "@/components/FeedKaart";
+import ConcertFeedKaart from "@/components/ConcertFeedKaart";
 import ThemeApplicator from "@/components/ThemeApplicator";
 import PollKaart from "@/components/PollKaart";
 
@@ -67,6 +68,15 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
     supabase.from("ratings").select("album_name, artist_name, album_image, album_url, rating").not("album_name", "is", null).not("rating", "is", null),
     supabase.from("profiles").select("theme").eq("id", user.id).single(),
   ]);
+
+  const { data: feedConcerts } = gevolgdeIds.length > 0
+    ? await supabase
+        .from("concert_reviews")
+        .select("id, user_id, rating, review, created_at, concert_events(id, artist_name, venue, city, country, concert_date)")
+        .in("user_id", gevolgdeIds)
+        .order("created_at", { ascending: false })
+        .limit(30)
+    : { data: [] };
 
   const ratingIds = feedRatings?.map((r) => r.id) ?? [];
 
@@ -213,14 +223,45 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
           <div className="w-full lg:max-w-xl">
             <PollKaart userId={user.id} />
 
-            {activeTab === "friends" ? (
-              !feedRatings || feedRatings.length === 0 ? (
+            {activeTab === "friends" ? (() => {
+              // Merge ratings and concerts sorted by created_at
+              type RatingItem = NonNullable<typeof feedRatings>[number];
+              type ConcertItem = NonNullable<typeof feedConcerts>[number];
+              type FeedItem = { type: "rating"; data: RatingItem; sortKey: string }
+                             | { type: "concert"; data: ConcertItem; sortKey: string };
+              const merged: FeedItem[] = [
+                ...(feedRatings ?? []).map(r => ({ type: "rating" as const, data: r, sortKey: r.created_at })),
+                ...(feedConcerts ?? []).map(c => ({ type: "concert" as const, data: c, sortKey: c.created_at })),
+              ].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+
+              return merged.length === 0 ? (
                 <div className="text-center py-20">
-                  <p className="text-stone-700 text-sm">The people you follow haven't rated anything yet.</p>
+                  <p className="text-stone-700 text-sm">The people you follow haven't posted anything yet.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {feedRatings.map((r) => {
+                  {merged.map((item) => {
+                    if (item.type === "concert") {
+                      const c = item.data;
+                      const event = c.concert_events as unknown as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
+                      if (!event) return null;
+                      return (
+                        <ConcertFeedKaart
+                          key={`concert-${c.id}`}
+                          concertId={event.id}
+                          artistName={event.artist_name}
+                          venue={event.venue}
+                          city={event.city}
+                          country={event.country}
+                          concertDate={event.concert_date}
+                          username={profielMap[c.user_id] ?? "?"}
+                          rating={c.rating}
+                          review={c.review}
+                          createdAt={c.created_at}
+                        />
+                      );
+                    }
+                    const r = item.data;
                     const vriendUsername = profielMap[r.user_id] ?? "?";
                     const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
                     const eigenRating = eigenRatingMap[albumKey] ?? null;
@@ -239,8 +280,8 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                     );
                   })}
                 </div>
-              )
-            ) : (
+              );
+            })() : (
               popularFeedRatings.length === 0 ? (
                 <div className="text-center py-20">
                   <p className="text-stone-700 text-sm">No popular reviews yet.</p>
