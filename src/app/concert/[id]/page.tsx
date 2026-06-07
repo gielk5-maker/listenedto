@@ -18,11 +18,17 @@ export default async function ConcertPage({ params }: { params: Promise<{ id: st
 
   if (!concert) notFound();
 
-  const { data: reviews } = await supabase
+  const { data: reviews, error: reviewsError } = await supabase
     .from("concert_reviews")
     .select("*, profiles(username, avatar_url)")
     .eq("concert_id", id)
     .order("created_at", { ascending: false });
+
+  console.log("[concert page] id:", id, "reviews:", reviews?.length, "error:", reviewsError?.message);
+
+  // Also check without filter to debug
+  const { data: allReviews } = await supabase.from("concert_reviews").select("concert_id, user_id").limit(10);
+  console.log("[concert page] all recent reviews:", JSON.stringify(allReviews));
 
   const eigenReview = reviews?.find(r => r.user_id === user?.id);
   const gemiddelde = reviews && reviews.length > 0 && reviews.some(r => r.rating)
