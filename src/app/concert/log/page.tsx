@@ -36,10 +36,10 @@ function LoggenInner() {
   const params = useSearchParams();
 
   const [artist, setArtist] = useState(params.get("artist") ?? "");
-  const [venue, setVenue] = useState("");
-  const [city, setCity] = useState("");
-  const [country, setCountry] = useState("");
-  const [date, setDate] = useState("");
+  const [venue, setVenue] = useState(params.get("venue") ?? "");
+  const [city, setCity] = useState(params.get("city") ?? "");
+  const [country, setCountry] = useState(params.get("country") ?? "");
+  const [date, setDate] = useState(params.get("date") ?? "");
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
   const [saving, setSaving] = useState(false);
