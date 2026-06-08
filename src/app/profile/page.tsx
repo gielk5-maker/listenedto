@@ -175,23 +175,25 @@ export default async function ProfielPage() {
                 const event = r.concert_events as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
                 if (!event) return null;
                 return (
-                  <Link key={r.id} href={`/concert/${event.id}`}
-                    className="flex items-center gap-4 bg-stone-900 hover:bg-stone-800/80 rounded-2xl p-3.5 transition-colors border border-stone-800/40 hover:border-stone-700">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-lg flex-shrink-0">
-                      🎤
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm truncate text-stone-100">{event.artist_name}</p>
-                      <p className="text-stone-500 text-xs truncate">{event.venue ? `${event.venue} · ` : ""}{event.city}, {event.country}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-stone-700 text-xs">{new Date(event.concert_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
-                      {r.rating && <p className="text-[var(--accent)] text-xs font-medium">{r.rating} ★</p>}
-                    </div>
-                  </Link>
-                  {r.review && (
-                    <p className="text-stone-500 text-xs italic px-1 mt-0.5 truncate">"{r.review}"</p>
-                  )}
+                  <div key={r.id}>
+                    <Link href={`/concert/${event.id}`}
+                      className="flex items-center gap-4 bg-stone-900 hover:bg-stone-800/80 rounded-2xl p-3.5 transition-colors border border-stone-800/40 hover:border-stone-700">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-lg flex-shrink-0">
+                        🎤
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate text-stone-100">{event.artist_name}</p>
+                        <p className="text-stone-500 text-xs truncate">{event.venue ? `${event.venue} · ` : ""}{event.city}, {event.country}</p>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-stone-700 text-xs">{new Date(event.concert_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</p>
+                        {r.rating && <p className="text-[var(--accent)] text-xs font-medium">{r.rating} ★</p>}
+                      </div>
+                    </Link>
+                    {r.review && (
+                      <p className="text-stone-500 text-xs italic px-1 mt-1 truncate">"{r.review}"</p>
+                    )}
+                  </div>
                 );
               })}
             </div>
