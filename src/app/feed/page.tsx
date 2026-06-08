@@ -69,14 +69,12 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
     supabase.from("profiles").select("theme").eq("id", user.id).single(),
   ]);
 
-  const { data: feedConcerts } = gevolgdeIds.length > 0
-    ? await supabase
-        .from("concert_reviews")
-        .select("id, user_id, rating, review, created_at, concert_events(id, artist_name, venue, city, country, concert_date)")
-        .in("user_id", gevolgdeIds)
-        .order("created_at", { ascending: false })
-        .limit(30)
-    : { data: [] };
+  const { data: feedConcerts } = await supabase
+    .from("concert_reviews")
+    .select("id, user_id, rating, review, created_at, concert_events(id, artist_name, venue, city, country, concert_date)")
+    .in("user_id", [user.id, ...gevolgdeIds])
+    .order("created_at", { ascending: false })
+    .limit(30);
 
   const ratingIds = feedRatings?.map((r) => r.id) ?? [];
 

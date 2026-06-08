@@ -189,6 +189,9 @@ export default async function ProfielPage() {
                       {r.rating && <p className="text-[var(--accent)] text-xs font-medium">{r.rating} ★</p>}
                     </div>
                   </Link>
+                  {r.review && (
+                    <p className="text-stone-500 text-xs italic px-1 mt-0.5 truncate">"{r.review}"</p>
+                  )}
                 );
               })}
             </div>
