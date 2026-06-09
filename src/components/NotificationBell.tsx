@@ -10,6 +10,8 @@ type Notif = {
   actor: string;
   albumName: string;
   albumArtist: string;
+  albumImage?: string | null;
+  albumUrl?: string | null;
   preview?: string;
   createdAt: string;
 };
@@ -30,13 +32,13 @@ export default function NotificationBell({ userId }: { userId: string }) {
       // Get user's ratings
       const { data: ratings } = await supabase
         .from("ratings")
-        .select("id, album_name, artist_name")
+        .select("id, album_name, artist_name, album_image, album_url")
         .eq("user_id", userId);
       if (!ratings || ratings.length === 0) { setLoading(false); return; }
 
       const ratingIds = ratings.map(r => r.id);
-      const ratingMap: Record<string, { album_name: string; artist_name: string }> = {};
-      ratings.forEach(r => { ratingMap[r.id] = { album_name: r.album_name, artist_name: r.artist_name }; });
+      const ratingMap: Record<string, { album_name: string; artist_name: string; album_image: string | null; album_url: string | null }> = {};
+      ratings.forEach(r => { ratingMap[r.id] = { album_name: r.album_name, artist_name: r.artist_name, album_image: r.album_image, album_url: r.album_url }; });
 
       // Fetch likes and comments in parallel
       const [{ data: likes }, { data: comments }] = await Promise.all([
@@ -74,6 +76,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
           actor: profileMap[l.user_id] ?? "Someone",
           albumName: ratingMap[l.rating_id]?.album_name ?? "",
           albumArtist: ratingMap[l.rating_id]?.artist_name ?? "",
+          albumImage: ratingMap[l.rating_id]?.album_image,
+          albumUrl: ratingMap[l.rating_id]?.album_url,
           createdAt: l.created_at,
         })),
         ...(comments ?? []).map(c => ({
@@ -82,6 +86,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
           actor: profileMap[c.user_id] ?? "Someone",
           albumName: ratingMap[c.rating_id]?.album_name ?? "",
           albumArtist: ratingMap[c.rating_id]?.artist_name ?? "",
+          albumImage: ratingMap[c.rating_id]?.album_image,
+          albumUrl: ratingMap[c.rating_id]?.album_url,
           preview: c.content,
           createdAt: c.created_at,
         })),
@@ -154,17 +160,17 @@ export default function NotificationBell({ userId }: { userId: string }) {
             <div className="py-10 text-center text-stone-600 text-sm">No notifications yet.</div>
           ) : (
             <div className="max-h-96 overflow-y-auto divide-y divide-stone-800/60">
-              {notifs.map(n => (
-                <div key={n.id} className="px-4 py-3 hover:bg-stone-800/50 transition-colors">
-                  <div className="flex items-start gap-2.5">
+              {notifs.map(n => {
+                const albumHref = `/album?name=${encodeURIComponent(n.albumName)}&artist=${encodeURIComponent(n.albumArtist)}${n.albumImage ? `&image=${encodeURIComponent(n.albumImage)}` : ""}${n.albumUrl ? `&url=${encodeURIComponent(n.albumUrl)}` : ""}`;
+                return (
+                  <Link key={n.id} href={albumHref} onClick={() => setOpen(false)}
+                    className="flex items-start gap-2.5 px-4 py-3 hover:bg-stone-800/50 transition-colors">
                     <span className="text-base mt-0.5 flex-shrink-0">
                       {n.type === "like" ? "❤️" : "💬"}
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-stone-200 leading-snug">
-                        <Link href={`/user/${n.actor}`} className="font-semibold hover:text-[var(--accent)] transition-colors">
-                          {n.actor}
-                        </Link>
+                        <span className="font-semibold">{n.actor}</span>
                         {n.type === "like" ? " liked your review of " : " commented on "}
                         <span className="font-medium text-stone-300">{n.albumName}</span>
                       </p>
@@ -173,9 +179,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
                       )}
                       <p className="text-[11px] text-stone-600 mt-1">{timeAgo(n.createdAt)}</p>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  </Link>
+                );
+              })}
             </div>
           )}
         </div>
