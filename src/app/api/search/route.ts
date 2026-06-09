@@ -32,8 +32,7 @@ async function itunesSearch(query: string) {
       const artist = a.artistName as string ?? "";
       const type = a.collectionType as string ?? "";
       const tracks = a.trackCount as number ?? 0;
-      // Filter out singles and EPs (< 4 tracks)
-      if (type === "Single" || tracks < 4) return false;
+      if (!name || !artist) return false;
       return name && artist && !nietLatijn.test(name) && !nietLatijn.test(artist);
     })
     .map((a: Record<string, unknown>) => ({
@@ -50,8 +49,6 @@ function mapSpotifyAlbums(items: Record<string, unknown>[]) {
     .filter(a => {
       const naam = a.name as string;
       const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
-      const albumType = a.album_type as string ?? "";
-      if (albumType === "single") return false;
       return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
     })
     .map(a => ({
