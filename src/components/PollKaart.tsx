@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 type PollType = "artist_vs" | "album_vs" | "hot_take";
@@ -215,33 +216,72 @@ export default function PollKaart({ userId }: { userId: string }) {
 
       {/* Voting */}
       {!voted ? (
-        <div className={`grid gap-3 ${isHotTake ? "grid-cols-2" : "grid-cols-2"}`}>
-          {([{ choice: "a" as const, label: labelA, img: imageA }, { choice: "b" as const, label: labelB, img: imageB }]).map(({ choice, label, img }) => (
-            <button key={choice} onClick={() => vote(choice)} disabled={voting}
-              className="flex flex-col items-center gap-2 bg-stone-800 hover:bg-stone-700 border border-stone-700/60 hover:border-[var(--accent)] rounded-2xl px-4 py-4 transition-all disabled:opacity-50">
-              {!isHotTake && img ? (
-                <img src={img} alt={label} className={`object-cover shadow-lg shadow-black/40 ${poll.type === "album_vs" ? "w-16 h-16 rounded-xl" : "w-16 h-16 rounded-full"}`} />
-              ) : !isHotTake ? (
-                <div className={`w-16 h-16 bg-stone-700 flex items-center justify-center text-2xl ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
-              ) : null}
-              <span className={`font-semibold text-stone-200 text-center leading-tight ${isHotTake ? "text-base" : "text-sm"}`}>{label}</span>
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-3">
+          {([{ choice: "a" as const, label: labelA, img: imageA, artist: poll.artist_a }, { choice: "b" as const, label: labelB, img: imageB, artist: poll.artist_b }]).map(({ choice, label, img, artist }) => {
+            const href = poll.type === "artist_vs"
+              ? `/artist?name=${encodeURIComponent(label)}`
+              : poll.type === "album_vs"
+              ? `/album?name=${encodeURIComponent(label)}&artist=${encodeURIComponent(artist ?? "")}`
+              : null;
+            return (
+              <button key={choice} onClick={() => vote(choice)} disabled={voting}
+                className="flex flex-col items-center gap-2 bg-stone-800 hover:bg-stone-700 border border-stone-700/60 hover:border-[var(--accent)] rounded-2xl px-4 py-4 transition-all disabled:opacity-50">
+                {!isHotTake && (
+                  <div className="relative">
+                    {img
+                      ? <img src={img} alt={label} className={`object-cover shadow-lg shadow-black/40 ${poll.type === "album_vs" ? "w-16 h-16 rounded-xl" : "w-16 h-16 rounded-full"}`} />
+                      : <div className={`w-16 h-16 bg-stone-700 flex items-center justify-center text-2xl ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
+                    }
+                    {href && (
+                      <Link href={href} onClick={e => e.stopPropagation()}
+                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-stone-900 border border-stone-700 rounded-full flex items-center justify-center hover:bg-stone-700 transition-colors"
+                        title={`Go to ${label}`}>
+                        <svg className="w-2.5 h-2.5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </Link>
+                    )}
+                  </div>
+                )}
+                <span className={`font-semibold text-stone-200 text-center leading-tight ${isHotTake ? "text-base" : "text-sm"}`}>{label}</span>
+              </button>
+            );
+          })}
         </div>
       ) : (
         <div className="space-y-3">
-          {([{ choice: "a" as const, label: labelA, img: imageA, pct: pctA, count: counts.a }, { choice: "b" as const, label: labelB, img: imageB, pct: pctB, count: counts.b }]).map(({ choice, label, img, pct, count }) => {
+          {([{ choice: "a" as const, label: labelA, img: imageA, artist: poll.artist_a, pct: pctA, count: counts.a }, { choice: "b" as const, label: labelB, img: imageB, artist: poll.artist_b, pct: pctB, count: counts.b }]).map(({ choice, label, img, artist, pct, count }) => {
             const isWinner = choice === "a" ? counts.a >= counts.b : counts.b >= counts.a;
             const isVoted = voted === choice;
+            const href = poll.type === "artist_vs"
+              ? `/artist?name=${encodeURIComponent(label)}`
+              : poll.type === "album_vs"
+              ? `/album?name=${encodeURIComponent(label)}&artist=${encodeURIComponent(artist ?? "")}`
+              : null;
             return (
               <div key={choice} className="flex items-center gap-3">
-                {!isHotTake && (img
-                  ? <img src={img} alt={label} className={`w-10 h-10 object-cover flex-shrink-0 ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`} />
-                  : <div className={`w-10 h-10 bg-stone-700 flex items-center justify-center text-lg flex-shrink-0 ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
+                {!isHotTake && (
+                  href ? (
+                    <Link href={href} className={`flex-shrink-0 hover:opacity-75 transition-opacity ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"} overflow-hidden`}>
+                      {img
+                        ? <img src={img} alt={label} className={`w-10 h-10 object-cover ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`} />
+                        : <div className={`w-10 h-10 bg-stone-700 flex items-center justify-center text-lg ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
+                      }
+                    </Link>
+                  ) : (
+                    img
+                      ? <img src={img} alt={label} className={`w-10 h-10 object-cover flex-shrink-0 ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`} />
+                      : <div className={`w-10 h-10 bg-stone-700 flex items-center justify-center text-lg flex-shrink-0 ${poll.type === "album_vs" ? "rounded-xl" : "rounded-full"}`}>🎤</div>
+                  )
                 )}
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className={`text-sm font-semibold ${isVoted ? "text-[var(--accent)]" : "text-stone-300"}`}>{label} {isVoted && "✓"}</span>
+                    <span className={`text-sm font-semibold ${isVoted ? "text-[var(--accent)]" : "text-stone-300"}`}>
+                      {href ? (
+                        <Link href={href} className="hover:text-[var(--accent)] transition-colors">{label}</Link>
+                      ) : label}
+                      {isVoted && " ✓"}
+                    </span>
                     <span className="text-stone-500 text-xs">{pct}% · {count}</span>
                   </div>
                   <div className="h-2 bg-stone-800 rounded-full overflow-hidden">
