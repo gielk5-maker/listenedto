@@ -37,36 +37,34 @@ export default async function TopAlbumsPage() {
         <Link href="/feed" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Feed</Link>
       </header>
 
-      <main className="max-w-xl mx-auto px-5 py-10">
+      <main className="max-w-5xl mx-auto px-5 py-10">
         <h1 className="text-2xl font-bold mb-1">Highest rated albums</h1>
         <p className="text-stone-500 text-sm mb-8">Ranked by average rating across all users</p>
 
-        <div className="space-y-2">
-          {albums.map((album, i) => (
-            <Link
-              key={`${album.album_name}__${album.artist_name}`}
-              href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
-              className="flex items-center gap-4 bg-stone-900 hover:bg-stone-800 rounded-2xl px-4 py-3 border border-stone-800/40 transition-colors group"
-            >
-              <span className="text-sm font-bold text-stone-600 w-6 text-right flex-shrink-0">#{i + 1}</span>
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-800 flex-shrink-0 shadow-md shadow-black/40">
-                <AlbumCover src={album.album_image} alt={album.album_name} width={48} height={48} className="object-cover w-full h-full" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-stone-100 font-semibold text-sm truncate">{album.album_name}</p>
-                <p className="text-stone-500 text-xs truncate">{album.artist_name}</p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <p className="text-[var(--accent)] font-bold text-sm">★ {album.avg}</p>
-                <p className="text-stone-600 text-[10px]">{album.count} {album.count === 1 ? "rating" : "ratings"}</p>
-              </div>
-            </Link>
-          ))}
-
-          {albums.length === 0 && (
-            <p className="text-stone-700 text-sm text-center py-20">No rated albums yet.</p>
-          )}
-        </div>
+        {albums.length === 0 ? (
+          <p className="text-stone-700 text-sm text-center py-20">No rated albums yet.</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {albums.map((album, i) => (
+              <Link
+                key={`${album.album_name}__${album.artist_name}`}
+                href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
+                className="group"
+              >
+                <div className="relative aspect-square rounded-2xl overflow-hidden bg-stone-800 shadow-lg shadow-black/40 mb-2.5 group-hover:opacity-80 transition-opacity">
+                  <AlbumCover src={album.album_image} alt={album.album_name} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <span className="absolute top-2 left-2 text-[10px] font-bold text-stone-300 bg-stone-950/70 rounded-lg px-1.5 py-0.5">#{i + 1}</span>
+                </div>
+                <p className="text-stone-100 font-semibold text-sm truncate leading-tight">{album.album_name}</p>
+                <p className="text-stone-500 text-xs truncate mt-0.5">{album.artist_name}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-[var(--accent)] text-xs font-bold">★ {album.avg}</p>
+                  <p className="text-stone-700 text-[10px]">{album.count} {album.count === 1 ? "rating" : "ratings"}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -249,9 +249,9 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
           </Link>
         </div>
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Feed kolom */}
-          <div className="w-full max-w-2xl">
+          <div className="w-full lg:max-w-2xl flex-1">
             <PollKaart userId={user.id} />
 
             {activeTab === "friends" ? (() => {
@@ -359,13 +359,10 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
               })()}
           </div>
 
-          {/* Highest rated — mobiel horizontaal scroll, desktop 4-koloms grid */}
+          {/* Most popular — sidebar op desktop, boven feed op mobiel */}
           {popularAlbums.length > 0 && (
-            <div className="order-first">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold">Highest rated</h2>
-                <Link href="/topalbums" className="text-xs text-stone-600 hover:text-stone-400 transition-colors">See all →</Link>
-              </div>
+            <div className="w-full lg:w-72 lg:flex-shrink-0 order-first lg:order-last">
+              <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Highest rated</h2>
 
               {/* Mobiel: horizontaal scroll */}
               <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden" style={{ scrollbarWidth: "none" }}>
@@ -382,29 +379,32 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                     </div>
                     <p className="text-stone-200 text-[11px] font-semibold truncate leading-tight">{album.album_name}</p>
                     <p className="text-stone-600 text-[10px] truncate mt-0.5">{album.artist_name}</p>
-                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg}</p>
+                    <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg} avg.</p>
                   </Link>
                 ))}
               </div>
 
-              {/* Desktop: 4-koloms grid met grote covers */}
-              <div className="hidden lg:grid grid-cols-4 gap-3">
-                {popularAlbums.slice(0, 8).map((album, i) => (
+              {/* Desktop: verticale lijst */}
+              <div className="hidden lg:flex flex-col gap-1">
+                {popularAlbums.map((album, i) => (
                   <Link key={`${album.album_name}__${album.artist_name}`}
                     href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
-                    className="group">
-                    <div className="relative aspect-square rounded-2xl overflow-hidden bg-stone-800 shadow-lg shadow-black/40 group-hover:opacity-80 transition-opacity mb-2">
+                    className="flex items-center gap-3 group hover:bg-stone-900 rounded-2xl px-3 py-2.5 transition-colors">
+                    <span className="text-xs font-bold text-stone-600 w-5 text-right flex-shrink-0">#{i + 1}</span>
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-800 flex-shrink-0 group-hover:opacity-80 transition-opacity shadow-md shadow-black/30">
                       {album.album_image
-                        ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                        : <div className="w-full h-full flex items-center justify-center text-stone-600 text-4xl">♪</div>
+                        ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
+                        : <div className="w-full h-full flex items-center justify-center text-stone-600 text-sm">♪</div>
                       }
-                      <span className="absolute top-2 left-2 text-[10px] font-bold text-stone-300 bg-stone-950/70 rounded-lg px-1.5 py-0.5">#{i + 1}</span>
                     </div>
-                    <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
-                    <p className="text-stone-500 text-[11px] truncate mt-0.5">{album.artist_name}</p>
-                    <p className="text-[var(--accent)] text-[11px] font-medium mt-0.5">★ {album.avg}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-stone-200 text-sm font-semibold truncate leading-tight">{album.album_name}</p>
+                      <p className="text-stone-500 text-xs truncate">{album.artist_name}</p>
+                      <p className="text-[var(--accent)] text-xs font-medium">★ {album.avg}</p>
+                    </div>
                   </Link>
                 ))}
+                <Link href="/topalbums" className="text-xs text-stone-600 hover:text-stone-400 transition-colors mt-2 px-3">See all →</Link>
               </div>
             </div>
           )}
