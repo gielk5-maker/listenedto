@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useRef, useLayoutEffect, useCallback } from "react";
+import { useState, useEffect, useTransition, useRef, useLayoutEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { updateListItemPositions, verwijderAlbumUitLijst, toggleRanking } from "@/app/actions/profile";
@@ -27,6 +27,13 @@ export default function LijstItemsBeheer({ listId, initialItems, isEigenaar, isR
   const [dragIdx, setDragIdx] = useState<number | null>(null);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const [, startTransition] = useTransition();
+
+  // Sync when server sends new items (e.g. after adding an album)
+  useEffect(() => {
+    if (dragIdx === null) {
+      setItems([...initialItems].sort((a, b) => a.position - b.position));
+    }
+  }, [initialItems]);
 
   // FLIP animation: track DOM positions before/after reorder
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
