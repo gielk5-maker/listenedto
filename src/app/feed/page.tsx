@@ -129,7 +129,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
     .filter((a) => a.count >= 1)
     .map((a) => ({ ...a, avg: Math.round((a.total / a.count) * 10) / 10 }))
     .sort((a, b) => b.avg - a.avg || b.count - a.count)
-    .slice(0, 5);
+    .slice(0, 10);
 
   // Popular feed: most liked ratings with a review
   let popularFeedRatings: typeof feedRatings = [];
@@ -232,7 +232,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         </nav>
       </header>
 
-      <main className="max-w-5xl mx-auto px-5 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         <FeedZoekbalk />
 
         {/* Tabs */}
@@ -249,7 +249,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Feed kolom */}
-          <div className="w-full lg:max-w-xl">
+          <div className="w-full lg:max-w-2xl flex-1">
             <PollKaart userId={user.id} />
 
             {activeTab === "friends" ? (() => {
@@ -359,17 +359,15 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
 
           {/* Most popular — sidebar op desktop, boven feed op mobiel */}
           {popularAlbums.length > 0 && (
-            <div className="w-full lg:w-56 lg:flex-shrink-0 order-first lg:order-last">
+            <div className="w-full lg:w-72 lg:flex-shrink-0 order-first lg:order-last">
               <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Highest rated</h2>
 
               {/* Mobiel: horizontaal scroll */}
               <div className="flex gap-3 overflow-x-auto pb-2 lg:hidden" style={{ scrollbarWidth: "none" }}>
                 {popularAlbums.map((album, i) => (
-                  <Link
-                    key={`${album.album_name}__${album.artist_name}`}
+                  <Link key={`${album.album_name}__${album.artist_name}`}
                     href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
-                    className="flex-shrink-0 w-20 group"
-                  >
+                    className="flex-shrink-0 w-20 group">
                     <div className="relative w-20 h-20 rounded-xl overflow-hidden bg-stone-800 mb-1.5 shadow-lg shadow-black/40 group-hover:opacity-80 transition-opacity">
                       {album.album_image
                         ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
@@ -382,32 +380,30 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                     <p className="text-[var(--accent)] text-[10px] font-medium mt-0.5">★ {album.avg} avg.</p>
                   </Link>
                 ))}
-              <Link href="/topalbums" className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors mt-1 block">See more →</Link>
+                <Link href="/topalbums" className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors mt-1 block">See more →</Link>
               </div>
 
-              {/* Desktop: verticale lijst */}
-              <div className="hidden lg:flex flex-col gap-2">
+              {/* Desktop: grotere lijst */}
+              <div className="hidden lg:flex flex-col gap-1">
                 {popularAlbums.map((album, i) => (
-                  <Link
-                    key={`${album.album_name}__${album.artist_name}`}
+                  <Link key={`${album.album_name}__${album.artist_name}`}
                     href={`/album?name=${encodeURIComponent(album.album_name)}&artist=${encodeURIComponent(album.artist_name)}&image=${encodeURIComponent(album.album_image ?? "")}&url=${encodeURIComponent(album.album_url ?? "")}`}
-                    className="flex items-center gap-3 group hover:bg-stone-900 rounded-xl px-2 py-1.5 transition-colors"
-                  >
-                    <span className="text-[10px] font-bold text-stone-700 w-4 text-right flex-shrink-0">#{i + 1}</span>
-                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-stone-800 flex-shrink-0 group-hover:opacity-80 transition-opacity">
+                    className="flex items-center gap-3 group hover:bg-stone-900 rounded-2xl px-3 py-2.5 transition-colors">
+                    <span className="text-xs font-bold text-stone-600 w-5 text-right flex-shrink-0">#{i + 1}</span>
+                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-800 flex-shrink-0 group-hover:opacity-80 transition-opacity shadow-md shadow-black/30">
                       {album.album_image
                         ? <img src={album.album_image} alt={album.album_name} className="w-full h-full object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-stone-600 text-xs">♪</div>
+                        : <div className="w-full h-full flex items-center justify-center text-stone-600 text-sm">♪</div>
                       }
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-stone-200 text-xs font-semibold truncate leading-tight">{album.album_name}</p>
-                      <p className="text-stone-600 text-[10px] truncate">{album.artist_name}</p>
-                      <p className="text-[var(--accent)] text-[10px]">★ {album.avg} avg.</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-stone-200 text-sm font-semibold truncate leading-tight">{album.album_name}</p>
+                      <p className="text-stone-500 text-xs truncate">{album.artist_name}</p>
+                      <p className="text-[var(--accent)] text-xs font-medium">★ {album.avg}</p>
                     </div>
                   </Link>
                 ))}
-                <Link href="/topalbums" className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors mt-1 px-2">See more →</Link>
+                <Link href="/topalbums" className="text-xs text-stone-600 hover:text-stone-400 transition-colors mt-2 px-3">See all →</Link>
               </div>
             </div>
           )}
