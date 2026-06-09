@@ -226,7 +226,6 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         </Link>
         <nav className="flex items-center gap-5">
           <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
           <LogoutButton />
         </nav>

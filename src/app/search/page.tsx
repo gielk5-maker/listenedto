@@ -104,7 +104,7 @@ function HandmatigForm({ onDone }: { onDone: () => void }) {
 
 function ZoekenInner() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<"albums" | "concerts">(params.get("tab") === "concerts" ? "concerts" : "albums");
+  const [tab, setTab] = useState<"albums" | "people" | "concerts">(params.get("tab") === "concerts" ? "concerts" : params.get("tab") === "people" ? "people" : "albums");
   const [query, setQuery] = useState(params.get("q") ?? "");
 
   // Albums state
@@ -113,6 +113,11 @@ function ZoekenInner() {
   const [albumLoading, setAlbumLoading] = useState(false);
   const [albumSearched, setAlbumSearched] = useState(false);
   const [showManual, setShowManual] = useState(false);
+
+  // People state
+  const [peopleResults, setPeopleResults] = useState<{ id: string; username: string }[]>([]);
+  const [peopleLoading, setPeopleLoading] = useState(false);
+  const [peopleSearched, setPeopleSearched] = useState(false);
 
   // Concerts state
   const [concertResults, setConcertResults] = useState<ConcertEvent[]>([]);
@@ -127,6 +132,16 @@ function ZoekenInner() {
     setAlbumResults(albRes);
     setArtists(artRes);
     setAlbumLoading(false);
+  }
+
+  async function searchPeople(q: string) {
+    if (!q.trim()) return;
+    setPeopleLoading(true);
+    setPeopleSearched(true);
+    const res = await fetch(`/api/users?q=${encodeURIComponent(q.trim())}`);
+    const data = await res.json();
+    setPeopleResults(data ?? []);
+    setPeopleLoading(false);
   }
 
   async function searchConcerts(q: string) {
@@ -152,6 +167,7 @@ function ZoekenInner() {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (tab === "albums") searchAlbumsTab(query);
+    else if (tab === "people") searchPeople(query);
     else searchConcerts(query);
   }
 
@@ -190,6 +206,10 @@ function ZoekenInner() {
               className={`flex-1 py-2.5 rounded-l-2xl text-sm font-semibold border-y border-l transition-colors ${tab === "albums" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}>
               Albums
             </button>
+            <button onClick={() => setTab("people")}
+              className={`flex-1 py-2.5 text-sm font-semibold border transition-colors ${tab === "people" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}>
+              People
+            </button>
             <button onClick={() => setTab("concerts")}
               className={`flex-1 py-2.5 rounded-r-2xl text-sm font-semibold border-y border-r transition-colors ${tab === "concerts" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}>
               Concerts
@@ -201,7 +221,7 @@ function ZoekenInner() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder={tab === "albums" ? "Search an album or artist..." : "Search a concert by artist..."}
+              placeholder={tab === "albums" ? "Search an album or artist..." : tab === "people" ? "Search a user..." : "Search a concert by artist..."}
               className="flex-1 bg-stone-900 border border-stone-700/60 rounded-2xl px-5 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
               autoFocus
             />
@@ -262,6 +282,40 @@ function ZoekenInner() {
                     Can't find it? Add manually
                   </button>
                 )}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* People tab */}
+        {tab === "people" && (
+          <>
+            {peopleLoading && (
+              <div className="flex items-center justify-center py-20">
+                <div className="w-6 h-6 border-2 border-stone-700 border-t-[var(--accent)] rounded-full animate-spin" />
+              </div>
+            )}
+            {!peopleLoading && peopleResults.length > 0 && (
+              <div className="space-y-2">
+                {peopleResults.map((u) => (
+                  <Link key={u.id} href={`/user/${u.username}`}
+                    className="flex items-center gap-4 bg-stone-900 hover:bg-stone-800/80 rounded-2xl p-3.5 transition-colors border border-stone-800/40 hover:border-stone-700">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-sm font-bold text-[var(--accent-text)] flex-shrink-0">
+                      {u.username[0]?.toUpperCase()}
+                    </div>
+                    <p className="font-semibold text-sm text-stone-100">{u.username}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+            {peopleSearched && !peopleLoading && peopleResults.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-stone-500 text-sm">No users found for "{query}".</p>
+              </div>
+            )}
+            {!peopleSearched && (
+              <div className="text-center py-16 text-stone-600 text-sm">
+                Search for a user by username.
               </div>
             )}
           </>
