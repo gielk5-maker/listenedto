@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { voegAlbumToeAanLijst } from "@/app/actions/profile";
@@ -20,7 +20,9 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
   const [added, setAdded] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+  const [, startTransition] = useTransition();
 
   function handleInput(q: string) {
     setQuery(q);
@@ -57,7 +59,12 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
       setError(result.error);
       setAdded(prev => prev.filter(k => k !== key));
     } else {
-      router.refresh();
+      // Refresh list in background without closing modal or clearing search
+      startTransition(() => router.refresh());
+      // Clear search so user can immediately look for next album
+      setQuery("");
+      setResults([]);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }
 
@@ -79,6 +86,7 @@ export default function AlbumToevoegen({ listId }: { listId: string }) {
             </div>
             <div className="relative mb-3">
               <input
+                ref={inputRef}
                 autoFocus
                 type="text"
                 value={query}
