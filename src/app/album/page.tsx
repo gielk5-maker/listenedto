@@ -222,15 +222,15 @@ function AlbumPageInner() {
           .from("ratings")
           .select("id, listen_number, rating, review, listened_at, created_at")
           .eq("user_id", user.id)
-          .eq("album_name", name)
-          .eq("artist_name", artist)
+          .ilike("album_name", name)
+          .ilike("artist_name", artist)
           .order("listened_at", { ascending: true })
           .order("created_at", { ascending: true }) : Promise.resolve({ data: [] }),
         supabase
           .from("ratings")
           .select("rating, review, listened_at, created_at, user_id")
-          .eq("album_name", name)
-          .eq("artist_name", artist),
+          .ilike("album_name", name)
+          .ilike("artist_name", artist),
       ]);
 
       const existing = ownResult.data ?? [];
