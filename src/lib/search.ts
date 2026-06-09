@@ -73,9 +73,6 @@ async function spotifySearch(query: string): Promise<SearchResult[] | null> {
       .filter((a: Record<string, unknown>) => {
         const naam = a.name as string;
         const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
-        const albumType = a.album_type as string ?? "";
-        // Filter out singles and EPs
-        if (albumType === "single") return false;
         return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
       })
       .map((a: Record<string, unknown>) => ({
