@@ -69,12 +69,21 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
     supabase.from("profiles").select("theme").eq("id", user.id).single(),
   ]);
 
-  const { data: feedConcerts } = await supabase
+  const { data: feedConcertsRaw } = await supabase
     .from("concert_reviews")
-    .select("id, user_id, rating, review, created_at, concert_events(id, artist_name, venue, city, country, concert_date)")
+    .select("id, user_id, rating, review, created_at, concert_id")
     .in("user_id", [user.id, ...gevolgdeIds])
     .order("created_at", { ascending: false })
     .limit(30);
+
+  // Fetch concert_events separately to avoid RLS join issues
+  const feedConcertEventIds = [...new Set((feedConcertsRaw ?? []).map(c => c.concert_id))];
+  const { data: feedConcertEvents } = feedConcertEventIds.length > 0
+    ? await supabase.from("concert_events").select("id, artist_name, venue, city, country, concert_date").in("id", feedConcertEventIds)
+    : { data: [] };
+  const feedConcertEventMap: Record<string, { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string }> = {};
+  (feedConcertEvents ?? []).forEach(e => { feedConcertEventMap[e.id] = e; });
+  const feedConcerts = (feedConcertsRaw ?? []).map(c => ({ ...c, concert_events: feedConcertEventMap[c.concert_id] ?? null }));
 
   const ratingIds = feedRatings?.map((r) => r.id) ?? [];
 
@@ -195,6 +204,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         </Link>
         <nav className="flex items-center gap-5">
           <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <Link href="/search?tab=concerts" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">Concerts</Link>
           <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
           <LogoutButton />
@@ -241,7 +251,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                   {merged.map((item) => {
                     if (item.type === "concert") {
                       const c = item.data;
-                      const event = c.concert_events as unknown as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
+                      const event = c.concert_events as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
                       if (!event) return null;
                       return (
                         <ConcertFeedKaart

@@ -104,7 +104,7 @@ function HandmatigForm({ onDone }: { onDone: () => void }) {
 
 function ZoekenInner() {
   const params = useSearchParams();
-  const [tab, setTab] = useState<"albums" | "concerts">("albums");
+  const [tab, setTab] = useState<"albums" | "concerts">(params.get("tab") === "concerts" ? "concerts" : "albums");
   const [query, setQuery] = useState(params.get("q") ?? "");
 
   // Albums state

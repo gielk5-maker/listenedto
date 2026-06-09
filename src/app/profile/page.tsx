@@ -35,8 +35,16 @@ export default async function ProfielPage() {
     supabase.from("profiles").select("username, avatar_url, theme, bio, spotify_url").eq("id", user.id).single(),
     supabase.from("favorites").select("*").eq("user_id", user.id).order("position"),
     supabase.from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false }),
-    supabase.from("concert_reviews").select("*, concert_events(*)").eq("user_id", user.id).order("created_at", { ascending: false }),
+    supabase.from("concert_reviews").select("id, concert_id, rating, review, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
   ]);
+
+  // Fetch concert_events separately to avoid RLS join issues
+  const concertIds = (concertReviews ?? []).map(r => r.concert_id);
+  const { data: concertEvents } = concertIds.length > 0
+    ? await supabase.from("concert_events").select("id, artist_name, venue, city, country, concert_date").in("id", concertIds)
+    : { data: [] };
+  const concertEventMap: Record<string, { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string }> = {};
+  (concertEvents ?? []).forEach(e => { concertEventMap[e.id] = e; });
 
   const ratings = [...(ratingsRaw ?? [])].sort((a, b) => {
     const aDate = a.listened_at ?? a.created_at.slice(0, 10);
@@ -172,7 +180,7 @@ export default async function ProfielPage() {
           ) : (
             <div className="space-y-2">
               {concertReviews.map((r) => {
-                const event = r.concert_events as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
+                const event = concertEventMap[r.concert_id] ?? null;
                 if (!event) return null;
                 return (
                   <div key={r.id}>
