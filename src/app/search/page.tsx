@@ -194,6 +194,7 @@ function ZoekenInner() {
               className={`flex-1 py-2.5 rounded-r-2xl text-sm font-semibold border-y border-r transition-colors ${tab === "concerts" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}>
               Concerts
             </button>
+          </div>
           {/* Search bar */}
           <form onSubmit={handleSubmit} className="w-full max-w-lg flex gap-2">
             <input
