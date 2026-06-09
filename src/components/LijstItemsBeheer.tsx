@@ -38,6 +38,29 @@ export default function LijstItemsBeheer({ listId, initialItems, isEigenaar, isR
   // FLIP animation: track DOM positions before/after reorder
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
   const prevPositions = useRef<Map<string, number>>(new Map());
+  const scrollRafRef = useRef<number | null>(null);
+
+  function startAutoScroll(clientY: number) {
+    if (scrollRafRef.current) cancelAnimationFrame(scrollRafRef.current);
+    const ZONE = 80; // px from edge to start scrolling
+    const MAX_SPEED = 12;
+
+    function tick() {
+      const distTop = clientY;
+      const distBottom = window.innerHeight - clientY;
+      let speed = 0;
+      if (distTop < ZONE) speed = -MAX_SPEED * (1 - distTop / ZONE);
+      else if (distBottom < ZONE) speed = MAX_SPEED * (1 - distBottom / ZONE);
+
+      if (speed !== 0) window.scrollBy({ top: speed, behavior: "instant" });
+      scrollRafRef.current = requestAnimationFrame(tick);
+    }
+    scrollRafRef.current = requestAnimationFrame(tick);
+  }
+
+  function stopAutoScroll() {
+    if (scrollRafRef.current) { cancelAnimationFrame(scrollRafRef.current); scrollRafRef.current = null; }
+  }
 
   // Snapshot y-positions before state update
   const snapshotPositions = useCallback(() => {
@@ -131,13 +154,14 @@ export default function LijstItemsBeheer({ listId, initialItems, isEigenaar, isR
                 e.dataTransfer.setDragImage(ghost, e.currentTarget.offsetWidth / 2, e.currentTarget.offsetHeight / 2);
                 setTimeout(() => document.body.removeChild(ghost), 0);
               }}
-              onDragOver={e => { e.preventDefault(); setDragOverIdx(i); }}
+              onDragOver={e => { e.preventDefault(); setDragOverIdx(i); startAutoScroll(e.clientY); }}
               onDrop={() => {
                 if (dragIdx !== null && dragIdx !== i) move(dragIdx, i);
                 setDragIdx(null);
                 setDragOverIdx(null);
+                stopAutoScroll();
               }}
-              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); }}
+              onDragEnd={() => { setDragIdx(null); setDragOverIdx(null); stopAutoScroll(); }}
               className={`group flex items-center gap-3 bg-stone-900 rounded-2xl p-3 border transition-colors ${
                 dragIdx === i
                   ? "border-[var(--accent)] opacity-40"
