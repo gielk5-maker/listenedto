@@ -221,7 +221,7 @@ export default function PollKaart({ userId }: { userId: string }) {
             const href = poll.type === "artist_vs"
               ? `/artist?name=${encodeURIComponent(label)}`
               : poll.type === "album_vs"
-              ? `/album?name=${encodeURIComponent(label)}&artist=${encodeURIComponent(artist ?? "")}`
+              ? `/album?name=${encodeURIComponent(label)}&artist=${encodeURIComponent(artist ?? "")}${img ? `&image=${encodeURIComponent(img)}` : ""}`
               : null;
             return (
               <button key={choice} onClick={() => vote(choice)} disabled={voting}
@@ -256,7 +256,7 @@ export default function PollKaart({ userId }: { userId: string }) {
             const href = poll.type === "artist_vs"
               ? `/artist?name=${encodeURIComponent(label)}`
               : poll.type === "album_vs"
-              ? `/album?name=${encodeURIComponent(label)}&artist=${encodeURIComponent(artist ?? "")}`
+              ? `/album?name=${encodeURIComponent(label)}&artist=${encodeURIComponent(artist ?? "")}${img ? `&image=${encodeURIComponent(img)}` : ""}`
               : null;
             return (
               <div key={choice} className="flex items-center gap-3">
