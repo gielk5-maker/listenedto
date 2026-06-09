@@ -39,7 +39,7 @@ export default function RatingVerdeling({ verdeling, totaal }: Props) {
               <div
                 className="w-full rounded-t-sm transition-all duration-150"
                 style={{
-                  height: count > 0 ? `${Math.max(heightPct, 4)}%` : "2px",
+                  height: count > 0 ? `calc(${heightPct}% + 3px)` : "2px",
                   backgroundColor: count === 0
                     ? "rgb(41,37,36)"
                     : isHovered
