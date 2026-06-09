@@ -8,6 +8,7 @@ type Notif = {
   id: string;
   type: "like" | "comment";
   actor: string;
+  ratingId: string;
   albumName: string;
   albumArtist: string;
   albumImage?: string | null;
@@ -74,6 +75,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
           id: `like-${l.id}`,
           type: "like" as const,
           actor: profileMap[l.user_id] ?? "Someone",
+          ratingId: l.rating_id,
           albumName: ratingMap[l.rating_id]?.album_name ?? "",
           albumArtist: ratingMap[l.rating_id]?.artist_name ?? "",
           albumImage: ratingMap[l.rating_id]?.album_image,
@@ -84,6 +86,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
           id: `comment-${c.id}`,
           type: "comment" as const,
           actor: profileMap[c.user_id] ?? "Someone",
+          ratingId: c.rating_id,
           albumName: ratingMap[c.rating_id]?.album_name ?? "",
           albumArtist: ratingMap[c.rating_id]?.artist_name ?? "",
           albumImage: ratingMap[c.rating_id]?.album_image,
@@ -161,9 +164,8 @@ export default function NotificationBell({ userId }: { userId: string }) {
           ) : (
             <div className="max-h-96 overflow-y-auto divide-y divide-stone-800/60">
               {notifs.map(n => {
-                const albumHref = `/album?name=${encodeURIComponent(n.albumName)}&artist=${encodeURIComponent(n.albumArtist)}${n.albumImage ? `&image=${encodeURIComponent(n.albumImage)}` : ""}${n.albumUrl ? `&url=${encodeURIComponent(n.albumUrl)}` : ""}`;
                 return (
-                  <Link key={n.id} href={albumHref} onClick={() => setOpen(false)}
+                  <Link key={n.id} href={`/review/${n.ratingId}`} onClick={() => setOpen(false)}
                     className="flex items-start gap-2.5 px-4 py-3 hover:bg-stone-800/50 transition-colors">
                     <span className="text-base mt-0.5 flex-shrink-0">
                       {n.type === "like" ? "❤️" : "💬"}
