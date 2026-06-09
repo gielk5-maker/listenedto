@@ -170,39 +170,42 @@ function ZoekenInner() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
         <Link href="/feed" className="text-base font-bold tracking-tight shrink-0 flex items-center gap-2">
           <Logo />
           <span>ListenedTo</span>
         </Link>
-        <form onSubmit={handleSubmit} className="flex-1 max-w-sm">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={tab === "albums" ? "Search an album or artist..." : "Search a concert by artist..."}
-            className="w-full bg-stone-900 border border-stone-700/60 rounded-xl px-3 py-2 text-sm text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors"
-            autoFocus
-          />
-        </form>
-        {tab === "albums" && <RandomAlbumButton />}
-        <nav className="flex items-center gap-4 ml-auto shrink-0">
+        <nav className="flex items-center gap-4 shrink-0">
           <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link>
         </nav>
       </header>
 
-      <main className="max-w-2xl mx-auto px-5 py-6 space-y-6">
-        {/* Tabs */}
-        <div className="flex gap-1 bg-stone-900 rounded-2xl p-1 w-fit border border-stone-800/60">
-          <button onClick={() => setTab("albums")}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === "albums" ? "bg-stone-800 text-stone-100" : "text-stone-500 hover:text-stone-300"}`}>
-            Albums
-          </button>
-          <button onClick={() => setTab("concerts")}
-            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${tab === "concerts" ? "bg-stone-800 text-stone-100" : "text-stone-500 hover:text-stone-300"}`}>
-            Concerts
-          </button>
+      <main className="max-w-2xl mx-auto px-5 py-8 space-y-6">
+        {/* Centered search area */}
+        <div className="flex flex-col items-center gap-3">
+          {/* Tabs */}
+          <div className="flex w-full max-w-lg">
+            <button onClick={() => setTab("albums")}
+              className={`flex-1 py-2.5 rounded-l-2xl text-sm font-semibold border-y border-l transition-colors ${tab === "albums" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}>
+              Albums
+            </button>
+            <button onClick={() => setTab("concerts")}
+              className={`flex-1 py-2.5 rounded-r-2xl text-sm font-semibold border-y border-r transition-colors ${tab === "concerts" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}>
+              Concerts
+            </button>
+          {/* Search bar */}
+          <form onSubmit={handleSubmit} className="w-full max-w-lg flex gap-2">
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={tab === "albums" ? "Search an album or artist..." : "Search a concert by artist..."}
+              className="flex-1 bg-stone-900 border border-stone-700/60 rounded-2xl px-5 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
+              autoFocus
+            />
+            {tab === "albums" && <RandomAlbumButton />}
+          </form>
         </div>
 
         {/* Albums tab */}
