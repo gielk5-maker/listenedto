@@ -404,7 +404,10 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                     </div>
                   </Link>
                 ))}
-                <Link href="/topalbums" className="text-xs text-stone-600 hover:text-stone-400 transition-colors mt-2 px-3">See all →</Link>
+                <Link href="/topalbums"
+                  className="mt-2 flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl border border-stone-700/60 bg-stone-900 hover:bg-stone-800 text-stone-300 hover:text-stone-100 text-sm font-semibold transition-colors">
+                  See all →
+                </Link>
               </div>
             </div>
           )}
