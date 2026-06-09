@@ -34,7 +34,8 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
             ListenedTo
           </Link>
           <nav className="flex items-center gap-5">
-            <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
+            <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+            <NotificationBell userId={user.id} />
             <Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link>
             <LogoutButton />
           </nav>
