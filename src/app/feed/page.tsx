@@ -72,7 +72,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   const { data: feedConcertsRaw } = await supabase
     .from("concert_reviews")
     .select("id, user_id, rating, review, created_at, concert_id")
-    .in("user_id", [user.id, ...gevolgdeIds])
+    .in("user_id", gevolgdeIds)
     .order("created_at", { ascending: false })
     .limit(30);
 
@@ -137,6 +137,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   let popularLikes: { id: string; user_id: string; rating_id: string }[] = [];
   let popularComments: { id: string; user_id: string; rating_id: string; content: string; created_at: string }[] = [];
   let popularCommentLikes: { id: string; user_id: string; comment_id: string }[] = [];
+  let popularConcerts: typeof feedConcerts = [];
 
   if (activeTab === "popular") {
     // Fetch recent ratings with reviews (last 90 days) + their like counts
@@ -192,6 +193,27 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         pcp?.forEach(p => { popularProfielMap[p.id] = p.username; });
       }
     }
+
+    // Fetch recent concert reviews for popular tab
+    const since90 = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: popConcertsRaw } = await supabase
+      .from("concert_reviews")
+      .select("id, user_id, rating, review, created_at, concert_id")
+      .gte("created_at", since90)
+      .order("created_at", { ascending: false })
+      .limit(30);
+    const popConcertEventIds = [...new Set((popConcertsRaw ?? []).map(c => c.concert_id))];
+    const { data: popConcertEvents } = popConcertEventIds.length > 0
+      ? await supabase.from("concert_events").select("id, artist_name, venue, city, country, concert_date").in("id", popConcertEventIds)
+      : { data: [] };
+    const popConcertEventMap: Record<string, { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string }> = {};
+    (popConcertEvents ?? []).forEach(e => { popConcertEventMap[e.id] = e; });
+    popularConcerts = (popConcertsRaw ?? []).map(c => ({ ...c, concert_events: popConcertEventMap[c.concert_id] ?? null }));
+    const popConcertUserIds = [...new Set((popConcertsRaw ?? []).map(c => c.user_id))];
+    if (popConcertUserIds.length > 0) {
+      const { data: pcu } = await supabase.from("profiles").select("id, username").in("id", popConcertUserIds);
+      pcu?.forEach(p => { popularProfielMap[p.id] = p.username; });
+    }
   }
 
   return (
@@ -204,7 +226,6 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         </Link>
         <nav className="flex items-center gap-5">
           <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/search?tab=concerts" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">Concerts</Link>
           <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
           <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
           <LogoutButton />
@@ -289,33 +310,51 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                   })}
                 </div>
               );
-            })() : (
-              popularFeedRatings.length === 0 ? (
-                <div className="text-center py-20">
-                  <p className="text-stone-700 text-sm">No popular reviews yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {popularFeedRatings.map((r) => {
-                    const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
-                    const eigenRating = eigenRatingMap[albumKey] ?? null;
-                    const likeCount = popularLikes.filter(l => l.rating_id === r.id).length;
-                    const liked = popularLikes.some(l => l.rating_id === r.id && l.user_id === user.id);
-                    const comments = popularComments.filter(c => c.rating_id === r.id).map(c => ({
-                      id: c.id, user_id: c.user_id, username: popularProfielMap[c.user_id] ?? "?",
-                      content: c.content, created_at: c.created_at,
-                      likeCount: popularCommentLikes.filter(cl => cl.comment_id === c.id).length,
-                      liked: popularCommentLikes.some(cl => cl.comment_id === c.id && cl.user_id === user.id),
-                    }));
-                    return (
-                      <FeedKaart key={r.id} r={r} vriendUsername={popularProfielMap[r.user_id] ?? "?"} eigenUserId={user.id}
-                        eigenUsername={eigenUsername} eigenRating={eigenRating} likeCount={likeCount}
-                        liked={liked} comments={comments} />
-                    );
-                  })}
-                </div>
-              )
-            )}
+            })() : (() => {
+                type PopRatingItem = NonNullable<typeof popularFeedRatings>[number];
+                type PopConcertItem = NonNullable<typeof popularConcerts>[number];
+                type PopItem = { type: "rating"; data: PopRatingItem; sortKey: string } | { type: "concert"; data: PopConcertItem; sortKey: string };
+                const merged: PopItem[] = [
+                  ...(popularFeedRatings ?? []).map(r => ({ type: "rating" as const, data: r, sortKey: r.created_at })),
+                  ...(popularConcerts ?? []).map(c => ({ type: "concert" as const, data: c, sortKey: c.created_at })),
+                ].sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+                return merged.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-stone-700 text-sm">No popular reviews yet.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {merged.map(item => {
+                      if (item.type === "concert") {
+                        const c = item.data;
+                        const event = c.concert_events as { id: string; artist_name: string; venue: string | null; city: string; country: string; concert_date: string } | null;
+                        if (!event) return null;
+                        return (
+                          <ConcertFeedKaart key={`concert-${c.id}`} concertId={event.id} artistName={event.artist_name}
+                            venue={event.venue} city={event.city} country={event.country} concertDate={event.concert_date}
+                            username={popularProfielMap[c.user_id] ?? "?"} rating={c.rating} review={c.review} createdAt={c.created_at} />
+                        );
+                      }
+                      const r = item.data;
+                      const albumKey = `${r.album_name.toLowerCase()}__${r.artist_name.toLowerCase()}`;
+                      const eigenRating = eigenRatingMap[albumKey] ?? null;
+                      const likeCount = popularLikes.filter(l => l.rating_id === r.id).length;
+                      const liked = popularLikes.some(l => l.rating_id === r.id && l.user_id === user.id);
+                      const comments = popularComments.filter(c => c.rating_id === r.id).map(c => ({
+                        id: c.id, user_id: c.user_id, username: popularProfielMap[c.user_id] ?? "?",
+                        content: c.content, created_at: c.created_at,
+                        likeCount: popularCommentLikes.filter(cl => cl.comment_id === c.id).length,
+                        liked: popularCommentLikes.some(cl => cl.comment_id === c.id && cl.user_id === user.id),
+                      }));
+                      return (
+                        <FeedKaart key={r.id} r={r} vriendUsername={popularProfielMap[r.user_id] ?? "?"} eigenUserId={user.id}
+                          eigenUsername={eigenUsername} eigenRating={eigenRating} likeCount={likeCount}
+                          liked={liked} comments={comments} />
+                      );
+                    })}
+                  </div>
+                );
+              })()}
           </div>
 
           {/* Most popular — sidebar op desktop, boven feed op mobiel */}
