@@ -164,11 +164,24 @@ function ZoekenInner() {
     if (q) { setQuery(q); searchAlbumsTab(q); }
   }, [params]);
 
+  // Live search with debounce
+  useEffect(() => {
+    if (!query.trim()) {
+      setAlbumResults([]); setArtists([]); setAlbumSearched(false);
+      setPeopleResults([]); setPeopleSearched(false);
+      setConcertResults([]); setConcertSearched(false);
+      return;
+    }
+    const t = setTimeout(() => {
+      if (tab === "albums") searchAlbumsTab(query);
+      else if (tab === "people") searchPeople(query);
+      else searchConcerts(query);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [query, tab]);
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (tab === "albums") searchAlbumsTab(query);
-    else if (tab === "people") searchPeople(query);
-    else searchConcerts(query);
   }
 
   function goToAlbum(item: AlbumResult) {
