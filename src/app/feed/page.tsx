@@ -3,6 +3,7 @@ import Logo from "@/components/Logo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
+import NotificationBell from "@/components/NotificationBell";
 import FeedZoekbalk from "@/components/FeedZoekbalk";
 import FeedKaart from "@/components/FeedKaart";
 import ConcertFeedKaart from "@/components/ConcertFeedKaart";
@@ -226,6 +227,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         </Link>
         <nav className="flex items-center gap-5">
           <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
+          <NotificationBell userId={user.id} />
           <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
           <LogoutButton />
         </nav>
