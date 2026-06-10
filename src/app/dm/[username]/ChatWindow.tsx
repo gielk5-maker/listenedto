@@ -224,7 +224,7 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
                     </button>
                     {menuId === msg.id && (
                       <div
-                        className="absolute bottom-full right-0 mb-1 bg-stone-800 border border-stone-700/60 rounded-xl shadow-2xl overflow-hidden z-20 min-w-[110px]"
+                        className="absolute top-full right-0 mt-1 bg-stone-800 border border-stone-700/60 rounded-xl shadow-2xl overflow-hidden z-20 min-w-[110px]"
                         onClick={e => e.stopPropagation()}
                       >
                         <button
