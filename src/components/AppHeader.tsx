@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import ChatButton from "@/components/ChatButton";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useRef } from "react";
 
@@ -62,6 +63,7 @@ export default function AppHeader({ right }: Props) {
         <div className="flex items-center gap-4 justify-end">
           <Link href="/feed" className={`text-sm transition-colors hidden sm:block ${pathname === "/feed" ? "text-stone-200 font-semibold" : "text-stone-500 hover:text-stone-200"}`}>Feed</Link>
           <Link href="/search" className={`text-sm transition-colors hidden sm:block ${pathname === "/search" ? "text-stone-200 font-semibold" : "text-stone-500 hover:text-stone-200"}`}>Search</Link>
+          <ChatButton />
           {right}
         </div>
 
