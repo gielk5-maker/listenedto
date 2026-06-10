@@ -9,6 +9,8 @@ import FeedKaart from "@/components/FeedKaart";
 import ConcertFeedKaart from "@/components/ConcertFeedKaart";
 import ThemeApplicator from "@/components/ThemeApplicator";
 import PollKaart from "@/components/PollKaart";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 export default async function FeedPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const { tab } = await searchParams;
@@ -28,7 +30,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   if (gevolgdeIds.length === 0) {
     return (
       <div className="min-h-screen text-stone-50">
-        <AppHeader right={<nav className="flex items-center gap-3"><Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link><LogoutButton /></nav>} />
+        <AppHeader right={<nav className="flex items-center gap-3"><Link href="/profile" className="flex items-center gap-1 text-sm font-semibold text-[var(--accent)]">{eigenUsername}{isVerified(eigenUsername) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}</Link><LogoutButton /></nav>} />
         <main className="max-w-xl mx-auto px-5 py-8">
           <FeedZoekbalk />
           <div className="text-center py-20 bg-stone-900/60 rounded-3xl border border-stone-800">
