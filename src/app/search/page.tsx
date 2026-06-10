@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -199,16 +199,7 @@ function ZoekenInner() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="text-base font-bold tracking-tight shrink-0 flex items-center gap-2">
-          <Logo />
-          <span>ListenedTo</span>
-        </Link>
-        <nav className="flex items-center gap-4 shrink-0">
-          <Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link>
-          <Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link>
-        </nav>
-      </header>
+      <AppHeader right={<><Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link><Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link></>} />
 
       <main className="max-w-2xl mx-auto px-5 py-8 space-y-6">
         {/* Centered search area */}

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import { createClient } from "@/lib/supabase/client";
 
 type Album = {
@@ -128,13 +128,7 @@ function ArtistPageInner() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center gap-3">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">← Search</Link>
-      </header>
+      <AppHeader right={<Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Search</Link>} />
 
       <main className="max-w-2xl mx-auto px-5 py-8">
         {/* Artist header */}

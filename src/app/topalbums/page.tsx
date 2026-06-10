@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import AlbumCover from "@/components/AlbumCover";
 import { createClient } from "@/lib/supabase/server";
 
@@ -38,13 +38,7 @@ export default async function TopAlbumsPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <Link href="/feed" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Feed</Link>
-      </header>
+      <AppHeader right={<Link href="/feed" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Feed</Link>} />
 
       <main className="max-w-5xl mx-auto px-5 py-10">
         <div className="flex items-end justify-between mb-8">

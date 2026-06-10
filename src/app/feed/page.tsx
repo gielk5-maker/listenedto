@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "@/components/LogoutButton";
@@ -28,18 +28,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   if (gevolgdeIds.length === 0) {
     return (
       <div className="min-h-screen text-stone-50">
-        <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-          <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-            <Logo />
-            ListenedTo
-          </Link>
-          <nav className="flex items-center gap-5">
-            <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-            <NotificationBell userId={user.id} />
-            <Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link>
-            <LogoutButton />
-          </nav>
-        </header>
+        <AppHeader right={<nav className="flex items-center gap-4"><NotificationBell userId={user.id} /><Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link><LogoutButton /></nav>} />
         <main className="max-w-xl mx-auto px-5 py-8">
           <FeedZoekbalk />
           <div className="text-center py-20 bg-stone-900/60 rounded-3xl border border-stone-800">
@@ -221,18 +210,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   return (
     <div className="min-h-screen text-stone-50">
       <ThemeApplicator dbTheme={eigenProfiel?.theme ?? undefined} />
-      <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <nav className="flex items-center gap-5">
-          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <NotificationBell userId={user.id} />
-          <Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link>
-          <LogoutButton />
-        </nav>
-      </header>
+      <AppHeader right={<nav className="flex items-center gap-4"><NotificationBell userId={user.id} /><Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link><LogoutButton /></nav>} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <FeedZoekbalk />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import { useSearchParams, useRouter } from "next/navigation";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
@@ -331,13 +331,7 @@ function AlbumPageInner() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Back</Link>
-      </header>
+      <AppHeader right={<Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Back</Link>} />
 
       <main className="max-w-xl mx-auto px-5 py-10 space-y-6">
         {/* Album header */}

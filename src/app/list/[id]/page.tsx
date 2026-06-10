@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AlbumToevoegen from "@/components/AlbumToevoegen";
@@ -26,15 +26,7 @@ export default async function LijstPagina({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center gap-3">
-        <Link href={isEigenaar ? "/profile" : `/user/${eigenaar?.username}`} className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <Link href={isEigenaar ? "/profile" : `/user/${eigenaar?.username}`} className="text-stone-500 hover:text-stone-200 text-sm transition-colors ml-auto">
-          ← {isEigenaar ? "Profile" : eigenaar?.username}
-        </Link>
-      </header>
+      <AppHeader right={<Link href={isEigenaar ? "/profile" : `/user/${eigenaar?.username}`} className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← {isEigenaar ? "Profile" : eigenaar?.username}</Link>} />
 
       <main className="max-w-2xl mx-auto px-5 py-8">
         <div className="mb-6">

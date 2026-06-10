@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import { logConcert } from "@/app/actions/concert";
 import DatePicker from "@/components/DatePicker";
 
@@ -61,13 +61,7 @@ function LoggenInner() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>
-      </header>
+      <AppHeader right={<Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>} />
 
       <main className="max-w-xl mx-auto px-5 py-10">
         <h1 className="text-2xl font-bold mb-8">Log a concert</h1>

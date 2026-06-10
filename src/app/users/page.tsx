@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -30,16 +30,7 @@ export default function GebruikersPage() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>
-        </div>
-      </header>
+      <AppHeader right={<Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>} />
 
       <main className="max-w-xl mx-auto px-5 py-8">
         <h1 className="text-2xl font-bold mb-6 text-stone-50">Find people</h1>

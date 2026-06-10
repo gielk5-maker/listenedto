@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Sterren from "@/components/Sterren";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -59,16 +59,7 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <nav className="flex items-center gap-5">
-          <Link href="/search" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Search</Link>
-          <Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>
-        </nav>
-      </header>
+      <AppHeader right={<Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">Profile</Link>} />
 
       <main className="max-w-xl mx-auto px-5 py-10">
         {/* Profile header */}

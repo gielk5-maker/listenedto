@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import Logo from "@/components/Logo";
+import AppHeader from "@/components/AppHeader";
 import FeedKaart from "@/components/FeedKaart";
 import AlbumCover from "@/components/AlbumCover";
 
@@ -69,13 +69,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="min-h-screen text-stone-50">
-      <header className="sticky top-0 z-10 bg-stone-950/95 backdrop-blur border-b border-stone-800/60 px-5 py-3 flex items-center justify-between">
-        <Link href="/feed" className="flex items-center gap-2 text-base font-bold">
-          <Logo />
-          ListenedTo
-        </Link>
-        <Link href="/feed" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Feed</Link>
-      </header>
+      <AppHeader right={<Link href="/feed" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Feed</Link>} />
 
       <main className="max-w-lg mx-auto px-5 py-10">
         {/* Album header */}
