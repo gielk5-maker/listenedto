@@ -6,6 +6,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type Listen = {
   id: string;
@@ -480,8 +482,9 @@ function AlbumPageInner() {
                 {communityReviews.map((r, i) => (
                   <div key={i} className="bg-stone-900 rounded-2xl px-4 py-3.5 border border-stone-800/40">
                     <div className="flex items-center justify-between mb-1.5">
-                      <Link href={`/user/${r.username}`} className="text-sm font-semibold text-stone-300 hover:text-white transition-colors">
+                      <Link href={`/user/${r.username}`} className="flex items-center gap-1 text-sm font-semibold text-stone-300 hover:text-white transition-colors">
                         {r.username}
+                        {isVerified(r.username) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
                       </Link>
                       <div className="flex items-center gap-2">
                         {r.rating && <SmallStars rating={r.rating} />}

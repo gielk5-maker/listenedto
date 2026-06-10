@@ -30,7 +30,7 @@ export default async function DmConversatiePage({ params }: { params: Promise<{ 
   // Load initial messages
   const { data: messages } = await supabase
     .from("messages")
-    .select("id, sender_id, content, created_at, read_at")
+    .select("id, sender_id, content, created_at, read_at, edited_at, deleted_at")
     .or(`and(sender_id.eq.${user.id},receiver_id.eq.${other.id}),and(sender_id.eq.${other.id},receiver_id.eq.${user.id})`)
     .order("created_at", { ascending: true })
     .limit(100);

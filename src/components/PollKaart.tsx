@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type PollType = "artist_vs" | "album_vs" | "hot_take";
 
@@ -315,7 +317,10 @@ export default function PollKaart({ userId }: { userId: string }) {
             <div className="space-y-2.5 max-h-48 overflow-y-auto">
               {comments.map(c => (
                 <div key={c.id} className="flex gap-2.5 items-start">
-                  <span className="text-[var(--accent)] text-xs font-semibold flex-shrink-0 mt-0.5">{c.username}</span>
+                  <span className="flex items-center gap-1 text-[var(--accent)] text-xs font-semibold flex-shrink-0 mt-0.5">
+                    {c.username}
+                    {isVerified(c.username) && <VerifiedBadge className="w-3 h-3 flex-shrink-0" />}
+                  </span>
                   <div className="flex-1 min-w-0">
                     {editingId === c.id ? (
                       <form onSubmit={async e => {

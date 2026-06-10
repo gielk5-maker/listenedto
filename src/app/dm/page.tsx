@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 export default async function DmPage() {
   const supabase = await createClient();
@@ -96,7 +98,10 @@ export default async function DmPage() {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-sm font-semibold ${unread > 0 ? "text-stone-50" : "text-stone-300"}`}>{profile.username}</span>
+                    <span className={`flex items-center gap-1 text-sm font-semibold ${unread > 0 ? "text-stone-50" : "text-stone-300"}`}>
+                      {profile.username}
+                      {isVerified(profile.username) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+                    </span>
                     {latest && <span className="text-xs text-stone-600 shrink-0">{timeAgo(latest.created_at)}</span>}
                   </div>
                   {latest ? (

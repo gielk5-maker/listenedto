@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 export default async function VolgersPagina() {
   const supabase = await createClient();
@@ -40,7 +42,10 @@ export default async function VolgersPagina() {
                 <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-sm font-bold text-[var(--accent-text)] flex-shrink-0 shadow shadow-black/20">
                   {p.username[0].toUpperCase()}
                 </div>
-                <span className="font-semibold text-stone-100">{p.username}</span>
+                <span className="flex items-center gap-1.5 font-semibold text-stone-100">
+                  {p.username}
+                  {isVerified(p.username) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+                </span>
               </Link>
             ))}
           </div>

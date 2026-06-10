@@ -4,6 +4,8 @@ import { useState } from "react";
 import AppHeader from "@/components/AppHeader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type Gebruiker = {
   id: string;
@@ -67,7 +69,10 @@ export default function GebruikersPage() {
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-sm font-bold text-[var(--accent-text)] flex-shrink-0 shadow shadow-black/25">
                 {g.username[0].toUpperCase()}
               </div>
-              <span className="font-semibold text-stone-100">{g.username}</span>
+              <span className="flex items-center gap-1.5 font-semibold text-stone-100">
+                {g.username}
+                {isVerified(g.username) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+              </span>
             </button>
           ))}
         </div>

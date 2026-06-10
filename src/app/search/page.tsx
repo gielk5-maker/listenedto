@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { searchAlbums, searchArtists, type ArtistResult } from "@/lib/search";
 import RandomAlbumButton from "@/components/RandomAlbumButton";
 import { createClient } from "@/lib/supabase/client";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type AlbumResult = {
   name: string;
@@ -307,7 +309,10 @@ function ZoekenInner() {
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-sm font-bold text-[var(--accent-text)] flex-shrink-0">
                       {u.username[0]?.toUpperCase()}
                     </div>
-                    <p className="font-semibold text-sm text-stone-100">{u.username}</p>
+                    <p className="flex items-center gap-1.5 font-semibold text-sm text-stone-100">
+                      {u.username}
+                      {isVerified(u.username) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
+                    </p>
                   </Link>
                 ))}
               </div>

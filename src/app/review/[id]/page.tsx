@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
 import FeedKaart from "@/components/FeedKaart";
+import { isVerified } from "@/lib/verified";
 import AlbumCover from "@/components/AlbumCover";
 
 export default async function ReviewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -88,6 +89,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
           <FeedKaart
             r={r}
             vriendUsername={username}
+            vriendVerified={isVerified(username)}
             eigenUserId={user.id}
             eigenUsername={eigenUsername}
             eigenRating={eigenRating}

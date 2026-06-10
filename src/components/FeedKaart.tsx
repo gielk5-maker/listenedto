@@ -6,6 +6,7 @@ import Link from "next/link";
 import AlbumCover from "@/components/AlbumCover";
 import { toggleLike, toggleCommentLike, plaatsComment, verwijderComment, bewerkComment } from "@/app/actions/social";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type Comment = {
   id: string;
@@ -185,8 +186,9 @@ export default function FeedKaart({ r, vriendUsername, vriendVerified, eigenUser
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5">
-                      <Link href={`/user/${c.username}`} className="text-xs font-semibold text-stone-300 hover:text-[var(--accent)] transition-colors">
+                      <Link href={`/user/${c.username}`} className="flex items-center gap-1 text-xs font-semibold text-stone-300 hover:text-[var(--accent)] transition-colors">
                         {c.username}
+                        {isVerified(c.username) && <VerifiedBadge className="w-3 h-3 flex-shrink-0" />}
                       </Link>
                       <span className="text-stone-700 text-[10px]">
                         {new Date(c.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}

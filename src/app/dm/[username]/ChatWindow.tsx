@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type Message = {
   id: string;
@@ -10,6 +12,8 @@ type Message = {
   content: string;
   created_at: string;
   read_at: string | null;
+  edited_at: string | null;
+  deleted_at: string | null;
 };
 
 type Other = {
@@ -29,34 +33,43 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [menuId, setMenuId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
-  // Scroll to bottom on new messages
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Realtime subscription
+  useEffect(() => {
+    if (!menuId) return;
+    function handler() { setMenuId(null); }
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [menuId]);
+
   useEffect(() => {
     const channel = supabase
       .channel(`dm-${[currentUserId, other.id].sort().join("-")}`)
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-      }, (payload) => {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const incoming = payload.new as Message & { receiver_id: string };
         const relevant =
           (incoming.sender_id === currentUserId && incoming.receiver_id === other.id) ||
           (incoming.sender_id === other.id && incoming.receiver_id === currentUserId);
         if (!relevant) return;
-        setMessages(prev => [...prev, incoming]);
-
-        // Mark as read if we received it
+        setMessages(prev => {
+          if (prev.some(m => m.id === incoming.id)) return prev;
+          return [...prev, incoming];
+        });
         if (incoming.sender_id === other.id) {
           supabase.from("messages").update({ read_at: new Date().toISOString() }).eq("id", incoming.id);
         }
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "messages" }, (payload) => {
+        const updated = payload.new as Message;
+        setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, ...updated } : m));
       })
       .subscribe();
 
@@ -70,13 +83,14 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
     setSending(true);
     setInput("");
 
-    // Optimistic update — show immediately without waiting for realtime
     const optimistic: Message = {
       id: `optimistic-${Date.now()}`,
       sender_id: currentUserId,
       content: text,
       created_at: new Date().toISOString(),
       read_at: null,
+      edited_at: null,
+      deleted_at: null,
     };
     setMessages(prev => [...prev, optimistic]);
 
@@ -84,16 +98,35 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
       sender_id: currentUserId,
       receiver_id: other.id,
       content: text,
-    }).select("id, sender_id, content, created_at, read_at").single();
+    }).select("id, sender_id, content, created_at, read_at, edited_at, deleted_at").single();
 
     if (error) {
       setMessages(prev => prev.filter(m => m.id !== optimistic.id));
       setInput(text);
     } else if (inserted) {
-      // Replace optimistic with real message
       setMessages(prev => prev.map(m => m.id === optimistic.id ? inserted : m));
     }
     setSending(false);
+  }
+
+  async function saveEdit(msgId: string) {
+    const trimmed = editText.trim();
+    if (!trimmed) return;
+    setEditingId(null);
+    const now = new Date().toISOString();
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, content: trimmed, edited_at: now } : m));
+    await supabase.from("messages")
+      .update({ content: trimmed, edited_at: now })
+      .eq("id", msgId).eq("sender_id", currentUserId);
+  }
+
+  async function deleteMsg(msgId: string) {
+    setMenuId(null);
+    const now = new Date().toISOString();
+    setMessages(prev => prev.map(m => m.id === msgId ? { ...m, deleted_at: now } : m));
+    await supabase.from("messages")
+      .update({ deleted_at: now })
+      .eq("id", msgId).eq("sender_id", currentUserId);
   }
 
   function formatTime(iso: string) {
@@ -115,7 +148,10 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
               : <div className="w-full h-full flex items-center justify-center text-stone-400 font-bold">{other.username[0].toUpperCase()}</div>
             }
           </div>
-          <span className="font-semibold text-stone-100">{other.username}</span>
+          <span className="flex items-center gap-1.5 font-semibold text-stone-100">
+            {other.username}
+            {isVerified(other.username) && <VerifiedBadge className="w-4 h-4 flex-shrink-0" />}
+          </span>
         </Link>
       </div>
 
@@ -129,20 +165,84 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
           const prev = messages[i - 1];
           const showTime = !prev || new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime() > 5 * 60 * 1000;
           const sameSender = prev && prev.sender_id === msg.sender_id;
+          const isDeleted = !!msg.deleted_at;
+          const isEditing = editingId === msg.id;
 
           return (
-            <div key={msg.id}>
+            <div key={msg.id} className={sameSender && !showTime ? "mt-0.5" : "mt-2"}>
               {showTime && (
                 <p className="text-center text-[11px] text-stone-700 my-3">{formatTime(msg.created_at)}</p>
               )}
-              <div className={`flex ${isMe ? "justify-end" : "justify-start"} ${sameSender && !showTime ? "mt-0.5" : "mt-2"}`}>
-                <div className={`max-w-[75%] px-4 py-2 rounded-2xl text-sm leading-relaxed break-words ${
-                  isMe
-                    ? "bg-[var(--accent)] text-[var(--accent-text)] rounded-br-md"
-                    : "bg-stone-800 text-stone-100 rounded-bl-md"
+
+              {/* Message row — group for hover-reveal of dots */}
+              <div className={`group flex items-center gap-2 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                {/* Bubble */}
+                <div className={`max-w-[75%] text-sm leading-relaxed break-words rounded-2xl ${
+                  isDeleted
+                    ? "px-4 py-2 bg-transparent text-stone-600 italic border border-stone-800"
+                    : isEditing
+                      ? "px-3 py-2 bg-stone-800 w-full max-w-[85%]"
+                      : isMe
+                        ? "px-4 py-2 bg-[var(--accent)] text-[var(--accent-text)] rounded-br-sm"
+                        : "px-4 py-2 bg-stone-800 text-stone-100 rounded-bl-sm"
                 }`}>
-                  {msg.content}
+                  {isDeleted ? (
+                    "This message was deleted"
+                  ) : isEditing ? (
+                    <form onSubmit={e => { e.preventDefault(); saveEdit(msg.id); }} className="flex gap-2 items-center">
+                      <input
+                        autoFocus
+                        value={editText}
+                        onChange={e => setEditText(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Escape") setEditingId(null); }}
+                        maxLength={2000}
+                        className="flex-1 bg-stone-700 rounded-lg px-3 py-1.5 text-stone-100 text-sm focus:outline-none"
+                      />
+                      <button type="submit" className="text-[var(--accent)] text-xs font-semibold shrink-0">Save</button>
+                      <button type="button" onClick={() => setEditingId(null)} className="text-stone-500 text-xs shrink-0">Cancel</button>
+                    </form>
+                  ) : (
+                    <>
+                      {msg.content}
+                      {msg.edited_at && (
+                        <span className={`text-[10px] ml-1.5 ${isMe ? "opacity-60" : "text-stone-500"}`}>edited</span>
+                      )}
+                    </>
+                  )}
                 </div>
+
+                {/* ··· menu — own non-deleted messages, visible on hover */}
+                {isMe && !isDeleted && !isEditing && (
+                  <div className="relative flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setMenuId(menuId === msg.id ? null : msg.id); }}
+                      className="w-6 h-6 flex items-center justify-center text-stone-400 hover:text-stone-200 rounded-lg hover:bg-stone-800 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
+                        <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
+                      </svg>
+                    </button>
+                    {menuId === msg.id && (
+                      <div
+                        className="absolute bottom-full right-0 mb-1 bg-stone-800 border border-stone-700/60 rounded-xl shadow-2xl overflow-hidden z-20 min-w-[110px]"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={() => { setEditingId(msg.id); setEditText(msg.content); setMenuId(null); }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-stone-200 hover:bg-stone-700 transition-colors"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => deleteMsg(msg.id)}
+                          className="w-full text-left px-4 py-2.5 text-sm text-red-400 hover:bg-stone-700 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

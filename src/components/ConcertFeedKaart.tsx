@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import Sterren from "@/components/Sterren";
+import VerifiedBadge from "@/components/VerifiedBadge";
+import { isVerified } from "@/lib/verified";
 
 type Props = {
   concertId: string;
@@ -27,8 +29,9 @@ export default function ConcertFeedKaart({ concertId, artistName, venue, city, c
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Link href={`/user/${username}`} className="text-sm font-semibold text-stone-200 hover:text-[var(--accent)] transition-colors">
+            <Link href={`/user/${username}`} className="flex items-center gap-1 text-sm font-semibold text-stone-200 hover:text-[var(--accent)] transition-colors">
               {username}
+              {isVerified(username) && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
             </Link>
             <span className="text-stone-600 text-xs">went to</span>
             <Link href={`/concert/${concertId}`} className="text-sm font-semibold text-stone-100 hover:text-[var(--accent)] transition-colors">
