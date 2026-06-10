@@ -83,7 +83,7 @@ export default async function ProfielPage() {
   return (
     <div className="min-h-screen text-stone-50">
       <ThemeApplicator dbTheme={profiel?.theme ?? undefined} />
-      <AppHeader right={<><Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link><LogoutButton /><ThemeSwitcher /></>} />
+      <AppHeader right={<><LogoutButton /><ThemeSwitcher /></>} />
 
       <main className="max-w-2xl mx-auto px-5 py-10 space-y-8">
 
