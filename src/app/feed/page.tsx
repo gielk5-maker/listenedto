@@ -213,7 +213,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   return (
     <div className="min-h-screen text-stone-50">
       <ThemeApplicator dbTheme={eigenProfiel?.theme ?? undefined} />
-      <AppHeader right={<nav className="flex items-center gap-4"><NotificationBell userId={user.id} /><Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link><LogoutButton /></nav>} />
+      <AppHeader right={<nav className="flex items-center gap-3"><Link href="/profile" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] transition-colors">{eigenUsername}</Link><LogoutButton /></nav>} />
 
       <main className="max-w-7xl mx-auto px-6 py-8">
         <FeedZoekbalk />
