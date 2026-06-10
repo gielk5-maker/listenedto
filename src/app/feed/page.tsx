@@ -28,7 +28,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   if (gevolgdeIds.length === 0) {
     return (
       <div className="min-h-screen text-stone-50">
-        <AppHeader right={<nav className="flex items-center gap-4"><NotificationBell userId={user.id} /><Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link><LogoutButton /></nav>} />
+        <AppHeader right={<nav className="flex items-center gap-3"><Link href="/profile" className="text-sm font-semibold text-[var(--accent)]">{eigenUsername}</Link><LogoutButton /></nav>} />
         <main className="max-w-xl mx-auto px-5 py-8">
           <FeedZoekbalk />
           <div className="text-center py-20 bg-stone-900/60 rounded-3xl border border-stone-800">

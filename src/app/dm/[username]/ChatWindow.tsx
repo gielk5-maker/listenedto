@@ -70,14 +70,28 @@ export default function ChatWindow({ currentUserId, other, initialMessages, isMu
     setSending(true);
     setInput("");
 
-    const { error } = await supabase.from("messages").insert({
+    // Optimistic update — show immediately without waiting for realtime
+    const optimistic: Message = {
+      id: `optimistic-${Date.now()}`,
+      sender_id: currentUserId,
+      content: text,
+      created_at: new Date().toISOString(),
+      read_at: null,
+    };
+    setMessages(prev => [...prev, optimistic]);
+
+    const { data: inserted, error } = await supabase.from("messages").insert({
       sender_id: currentUserId,
       receiver_id: other.id,
       content: text,
-    });
+    }).select("id, sender_id, content, created_at, read_at").single();
 
     if (error) {
-      setInput(text); // restore on failure
+      setMessages(prev => prev.filter(m => m.id !== optimistic.id));
+      setInput(text);
+    } else if (inserted) {
+      // Replace optimistic with real message
+      setMessages(prev => prev.map(m => m.id === optimistic.id ? inserted : m));
     }
     setSending(false);
   }

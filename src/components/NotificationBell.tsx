@@ -17,16 +17,25 @@ type Notif = {
   createdAt: string;
 };
 
-export default function NotificationBell({ userId }: { userId: string }) {
+export default function NotificationBell({ userId: propUserId }: { userId?: string }) {
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(propUserId ?? null);
   const ref = useRef<HTMLDivElement>(null);
   const lastSeenKey = `lt-notifs-seen-${userId}`;
 
   useEffect(() => {
     async function load() {
+      if (!userId) {
+        const { createClient } = await import("@/lib/supabase/client");
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setLoading(false); return; }
+        setUserId(user.id);
+        return; // re-runs via userId dependency
+      }
       const supabase = createClient();
       const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -104,7 +113,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
       setLoading(false);
     }
     load();
-  }, [userId]);
+  }, [userId, propUserId]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
