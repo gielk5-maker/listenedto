@@ -199,7 +199,7 @@ function ZoekenInner() {
 
   return (
     <div className="min-h-screen text-stone-50">
-      <AppHeader right={<><Link href="/users" className="text-stone-500 hover:text-stone-200 text-sm transition-colors hidden sm:block">People</Link><Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link></>} />
+      <AppHeader right={<Link href="/profile" className="text-stone-400 hover:text-stone-100 text-sm transition-colors">Profile</Link>} />
 
       <main className="max-w-2xl mx-auto px-5 py-8 space-y-6">
         {/* Centered search area */}
