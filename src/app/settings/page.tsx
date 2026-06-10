@@ -27,6 +27,7 @@ export default async function InstellingenPage({ searchParams }: { searchParams:
         <SettingsTabs
           initialTab={tab === "preferences" ? "preferences" : "profile"}
           username={username}
+          email={user.email ?? ""}
           bio={bio}
           spotifyUrl={spotifyUrl}
           userId={user.id}

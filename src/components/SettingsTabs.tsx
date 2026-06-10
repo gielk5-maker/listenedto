@@ -10,13 +10,14 @@ import AvatarUpload from "@/components/AvatarUpload";
 type Props = {
   initialTab: "profile" | "preferences";
   username: string;
+  email: string;
   bio: string;
   spotifyUrl: string;
   userId: string;
   avatarUrl: string | null;
 };
 
-export default function SettingsTabs({ initialTab, username, bio, spotifyUrl, userId, avatarUrl }: Props) {
+export default function SettingsTabs({ initialTab, username, email, bio, spotifyUrl, userId, avatarUrl }: Props) {
   const [tab, setTab] = useState<"profile" | "preferences">(initialTab);
 
   return (
@@ -33,7 +34,7 @@ export default function SettingsTabs({ initialTab, username, bio, spotifyUrl, us
           onClick={() => setTab("preferences")}
           className={`flex-1 py-2.5 rounded-r-2xl text-sm font-semibold border-y border-r transition-colors ${tab === "preferences" ? "bg-stone-800 text-stone-100 border-stone-700" : "text-stone-500 hover:text-stone-300 bg-stone-900 border-stone-800/60"}`}
         >
-          Preferences
+          Account settings
         </button>
       </div>
 
@@ -51,18 +52,17 @@ export default function SettingsTabs({ initialTab, username, bio, spotifyUrl, us
             <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Theme</h2>
             <ThemeSettings />
           </section>
+          <section>
+            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Feedback</h2>
+            <FeedbackForm userId={userId} username={username} />
+          </section>
         </div>
       )}
 
       {tab === "preferences" && (
         <div className="space-y-10">
           <section>
-            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Account</h2>
-            <AccountSettings username={username} />
-          </section>
-          <section>
-            <h2 className="text-xs text-stone-600 uppercase tracking-widest font-semibold mb-5">Feedback</h2>
-            <FeedbackForm userId={userId} username={username} />
+            <AccountSettings username={username} email={email} />
           </section>
         </div>
       )}

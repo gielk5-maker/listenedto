@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { wijzigUsername, wijzigWachtwoord } from "@/app/actions/settings";
+import { wijzigUsername, wijzigWachtwoord, wijzigEmail } from "@/app/actions/settings";
 
-export default function AccountSettings({ username }: { username: string }) {
+export default function AccountSettings({ username, email }: { username: string; email: string }) {
   const [newUsername, setNewUsername] = useState(username);
+
+  const [newEmail, setNewEmail] = useState(email);
+  const [emailMsg, setEmailMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [usernameMsg, setUsernameMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [usernameLoading, setUsernameLoading] = useState(false);
 
@@ -13,6 +17,17 @@ export default function AccountSettings({ username }: { username: string }) {
   const [confirmPw, setConfirmPw] = useState("");
   const [pwMsg, setPwMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [pwLoading, setPwLoading] = useState(false);
+
+  async function handleEmail(e: React.FormEvent) {
+    e.preventDefault();
+    if (newEmail.trim() === email) return;
+    setEmailLoading(true);
+    setEmailMsg(null);
+    const result = await wijzigEmail(newEmail);
+    setEmailLoading(false);
+    if (result?.error) setEmailMsg({ type: "err", text: result.error });
+    else setEmailMsg({ type: "ok", text: "Confirmation sent to your new email address." });
+  }
 
   async function handleUsername(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +56,30 @@ export default function AccountSettings({ username }: { username: string }) {
 
   return (
     <div className="space-y-6">
+      {/* Email */}
+      <div className="bg-stone-900 rounded-3xl p-6 border border-stone-800/60">
+        <h3 className="font-bold text-stone-100 mb-4">Email address</h3>
+        <form onSubmit={handleEmail} className="space-y-3">
+          <input
+            type="email"
+            value={newEmail}
+            onChange={e => { setNewEmail(e.target.value); setEmailMsg(null); }}
+            placeholder="your@email.com"
+            className="w-full bg-stone-800 border border-stone-700/60 rounded-xl px-4 py-3 text-stone-50 placeholder-stone-600 focus:outline-none focus:border-[var(--accent)] transition-colors text-sm"
+          />
+          {emailMsg && (
+            <p className={`text-sm px-4 py-2.5 rounded-xl border ${emailMsg.type === "ok" ? "text-green-400 bg-green-950/30 border-green-900/50" : "text-red-400 bg-red-950/30 border-red-900/50"}`}>{emailMsg.text}</p>
+          )}
+          <button
+            type="submit"
+            disabled={emailLoading || newEmail.trim() === email || !newEmail.trim()}
+            className="bg-[var(--accent)] hover:opacity-90 disabled:opacity-40 text-[var(--accent-text)] font-bold rounded-xl px-5 py-2.5 text-sm transition-opacity"
+          >
+            {emailLoading ? "Saving..." : "Update email"}
+          </button>
+        </form>
+      </div>
+
       {/* Username */}
       <div className="bg-stone-900 rounded-3xl p-6 border border-stone-800/60">
         <h3 className="font-bold text-stone-100 mb-4">Username</h3>

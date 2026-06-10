@@ -29,6 +29,21 @@ export async function wijzigUsername(username: string) {
   return { success: true };
 }
 
+export async function wijzigEmail(newEmail: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not logged in" };
+
+  const trimmed = newEmail.trim().toLowerCase();
+  if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return { error: "Enter a valid email address" };
+  if (trimmed === user.email) return { error: "This is already your email address" };
+
+  const { error } = await supabase.auth.updateUser({ email: trimmed });
+  if (error) return { error: error.message };
+
+  return { success: true };
+}
+
 export async function wijzigWachtwoord(huidig: string, nieuw: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
