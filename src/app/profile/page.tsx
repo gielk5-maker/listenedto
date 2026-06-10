@@ -12,6 +12,7 @@ import FavorietenSlots from "@/components/FavorietenSlots";
 import LijstBeheer from "@/components/LijstBeheer";
 import RatingVerdeling from "@/components/RatingVerdeling";
 import ListeningStats from "@/components/ListeningStats";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 
 
@@ -32,7 +33,7 @@ export default async function ProfielPage() {
     supabase.from("ratings").select("*").eq("user_id", user.id),
     supabase.from("follows").select("follower_id").eq("following_id", user.id),
     supabase.from("follows").select("following_id").eq("follower_id", user.id),
-    supabase.from("profiles").select("username, avatar_url, theme, bio, spotify_url").eq("id", user.id).single(),
+    supabase.from("profiles").select("username, avatar_url, theme, bio, spotify_url, verified").eq("id", user.id).single(),
     supabase.from("favorites").select("*").eq("user_id", user.id).order("position"),
     supabase.from("lists").select("id, name, description").eq("user_id", user.id).order("created_at", { ascending: false }),
     supabase.from("concert_reviews").select("id, concert_id, rating, review, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
@@ -93,6 +94,7 @@ export default async function ProfielPage() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-stone-50">{username}</h1>
+              {profiel?.verified && <VerifiedBadge className="w-5 h-5 flex-shrink-0" />}
               {spotifyUrl && (
                 <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" title="Spotify profile"
                   className="text-[#1DB954] hover:opacity-80 transition-opacity flex-shrink-0">

@@ -5,6 +5,7 @@ import Sterren from "@/components/Sterren";
 import Link from "next/link";
 import AlbumCover from "@/components/AlbumCover";
 import { toggleLike, toggleCommentLike, plaatsComment, verwijderComment, bewerkComment } from "@/app/actions/social";
+import VerifiedBadge from "@/components/VerifiedBadge";
 
 type Comment = {
   id: string;
@@ -32,6 +33,7 @@ type Props = {
     listened_at: string | null;
   };
   vriendUsername: string;
+  vriendVerified?: boolean;
   eigenUserId: string;
   eigenUsername: string;
   eigenRating: number | null;
@@ -42,7 +44,7 @@ type Props = {
 
 
 
-export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsername, eigenRating, likeCount: initLikes, liked: initLiked, comments: initComments }: Props) {
+export default function FeedKaart({ r, vriendUsername, vriendVerified, eigenUserId, eigenUsername, eigenRating, likeCount: initLikes, liked: initLiked, comments: initComments }: Props) {
   const [liked, setLiked] = useState(initLiked);
   const [likeCount, setLikeCount] = useState(initLikes);
   const [comments, setComments] = useState<Comment[]>(initComments);
@@ -96,8 +98,9 @@ export default function FeedKaart({ r, vriendUsername, eigenUserId, eigenUsernam
           className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-dark)] flex items-center justify-center text-xs font-bold text-[var(--accent-text)] hover:opacity-80 transition-opacity flex-shrink-0 shadow shadow-black/25">
           {vriendUsername[0]?.toUpperCase()}
         </Link>
-        <Link href={`/user/${vriendUsername}`} className="text-sm font-semibold hover:text-[var(--accent)] transition-colors">
+        <Link href={`/user/${vriendUsername}`} className="flex items-center gap-1 text-sm font-semibold hover:text-[var(--accent)] transition-colors">
           {vriendUsername}
+          {vriendVerified && <VerifiedBadge className="w-3.5 h-3.5 flex-shrink-0" />}
         </Link>
         <span className="text-stone-700 text-xs ml-auto">
           {new Date(r.listened_at ? r.listened_at + "T00:00:00" : r.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}

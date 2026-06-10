@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { volg, ontvolg } from "@/app/actions/social";
 import Image from "next/image";
+import VerifiedBadge from "@/components/VerifiedBadge";
 import TasteMatch from "@/components/TasteMatch";
 
 
@@ -17,7 +18,7 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
   if (!user) redirect("/login");
 
   const { data: profiel } = await supabase
-    .from("profiles").select("id, username, avatar_url, bio, spotify_url").eq("username", username).maybeSingle();
+    .from("profiles").select("id, username, avatar_url, bio, spotify_url, verified").eq("username", username).maybeSingle();
 
   if (!profiel) {
     return (
@@ -76,6 +77,7 @@ export default async function GebruikerPage({ params }: { params: Promise<{ user
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="text-2xl font-bold text-stone-50">{profiel.username}</h1>
+              {profiel.verified && <VerifiedBadge className="w-5 h-5 flex-shrink-0" />}
               {profiel.spotify_url && (
                 <a href={profiel.spotify_url} target="_blank" rel="noopener noreferrer" title="Spotify profile"
                   className="text-[#1DB954] hover:opacity-80 transition-opacity flex-shrink-0">

@@ -55,7 +55,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   ] = await Promise.all([
     supabase.from("ratings").select("*").in("user_id", gevolgdeIds).order("created_at", { ascending: false }).limit(50),
     supabase.from("ratings").select("album_name, artist_name, rating").eq("user_id", user.id),
-    supabase.from("profiles").select("id, username").in("id", allIds),
+    supabase.from("profiles").select("id, username, verified").in("id", allIds),
     supabase.from("ratings").select("album_name, artist_name, album_image, album_url, rating").not("album_name", "is", null).not("rating", "is", null),
     supabase.from("profiles").select("theme").eq("id", user.id).single(),
   ]);
@@ -85,7 +85,8 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   });
 
   const profielMap: Record<string, string> = {};
-  profielen?.forEach((p) => { profielMap[p.id] = p.username; });
+  const verifiedMap: Record<string, boolean> = {};
+  profielen?.forEach((p) => { profielMap[p.id] = p.username; verifiedMap[p.id] = p.verified ?? false; });
   profielMap[user.id] = profielMap[user.id] ?? eigenUsername;
 
   const [
@@ -125,6 +126,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   // Popular feed: most liked ratings with a review
   let popularFeedRatings: typeof feedRatings = [];
   let popularProfielMap: Record<string, string> = {};
+  let popularVerifiedMap: Record<string, boolean> = {};
   let popularLikes: { id: string; user_id: string; rating_id: string }[] = [];
   let popularComments: { id: string; user_id: string; rating_id: string; content: string; created_at: string }[] = [];
   let popularCommentLikes: { id: string; user_id: string; comment_id: string }[] = [];
@@ -163,9 +165,10 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
 
     const popUserIds = [...new Set(popularFeedRatings?.map(r => r.user_id) ?? [])];
     const { data: popProfielen } = popUserIds.length > 0
-      ? await supabase.from("profiles").select("id, username").in("id", popUserIds)
+      ? await supabase.from("profiles").select("id, username, verified").in("id", popUserIds)
       : { data: [] };
-    popProfielen?.forEach(p => { popularProfielMap[p.id] = p.username; });
+    const popularVerifiedMap: Record<string, boolean> = {};
+    popProfielen?.forEach(p => { popularProfielMap[p.id] = p.username; popularVerifiedMap[p.id] = p.verified ?? false; });
 
     const popRatingIds = popularFeedRatings?.map(r => r.id) ?? [];
     if (popRatingIds.length > 0) {
@@ -283,7 +286,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                       liked: allCommentLikes?.some((cl) => cl.comment_id === c.id && cl.user_id === user.id) ?? false,
                     }));
                     return (
-                      <FeedKaart key={r.id} r={r} vriendUsername={vriendUsername} eigenUserId={user.id}
+                      <FeedKaart key={r.id} r={r} vriendUsername={vriendUsername} vriendVerified={verifiedMap[r.user_id]} eigenUserId={user.id}
                         eigenUsername={eigenUsername} eigenRating={eigenRating} likeCount={likeCount}
                         liked={liked} comments={comments} />
                     );
@@ -327,7 +330,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
                         liked: popularCommentLikes.some(cl => cl.comment_id === c.id && cl.user_id === user.id),
                       }));
                       return (
-                        <FeedKaart key={r.id} r={r} vriendUsername={popularProfielMap[r.user_id] ?? "?"} eigenUserId={user.id}
+                        <FeedKaart key={r.id} r={r} vriendUsername={popularProfielMap[r.user_id] ?? "?"} vriendVerified={popularVerifiedMap[r.user_id]} eigenUserId={user.id}
                           eigenUsername={eigenUsername} eigenRating={eigenRating} likeCount={likeCount}
                           liked={liked} comments={comments} />
                       );
