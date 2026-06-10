@@ -58,8 +58,10 @@ export default function AppHeader({ right }: Props) {
           </form>
         ) : <div />}
 
-        {/* Right — page-specific nav */}
-        <div className="flex items-center gap-3 justify-end">
+        {/* Right — fixed nav + page-specific content */}
+        <div className="flex items-center gap-4 justify-end">
+          <Link href="/feed" className={`text-sm transition-colors hidden sm:block ${pathname === "/feed" ? "text-stone-200 font-semibold" : "text-stone-500 hover:text-stone-200"}`}>Feed</Link>
+          <Link href="/search" className={`text-sm transition-colors hidden sm:block ${pathname === "/search" ? "text-stone-200 font-semibold" : "text-stone-500 hover:text-stone-200"}`}>Search</Link>
           {right}
         </div>
 
