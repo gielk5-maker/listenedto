@@ -17,13 +17,15 @@ export default async function DmConversatiePage({ params }: { params: Promise<{ 
   if (!other) notFound();
   if (other.id === user.id) redirect("/dm");
 
-  // Check mutual follow
-  const [{ data: iFollow }, { data: theyFollow }] = await Promise.all([
-    supabase.from("follows").select("id").eq("follower_id", user.id).eq("following_id", other.id).maybeSingle(),
-    supabase.from("follows").select("id").eq("follower_id", other.id).eq("following_id", user.id).maybeSingle(),
+  // Check mutual follow — fetch both directions separately to avoid RLS issues
+  const [{ data: iFollowRows }, { data: myFollowers }] = await Promise.all([
+    supabase.from("follows").select("following_id").eq("follower_id", user.id),
+    supabase.from("follows").select("follower_id").eq("following_id", user.id),
   ]);
 
-  const isMutual = !!(iFollow && theyFollow);
+  const iFollow = (iFollowRows ?? []).some(r => r.following_id === other.id);
+  const theyFollow = (myFollowers ?? []).some(r => r.follower_id === other.id);
+  const isMutual = iFollow && theyFollow;
 
   // Load initial messages
   const { data: messages } = await supabase
