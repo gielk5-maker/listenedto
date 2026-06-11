@@ -64,6 +64,12 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   if (!query) return NextResponse.json([]);
 
+  // If source=itunes, skip Spotify and go straight to iTunes
+  if (request.nextUrl.searchParams.get("source") === "itunes") {
+    const cleanQuery = query.replace(/\./g, " ").trim();
+    return NextResponse.json(await itunesSearch(cleanQuery));
+  }
+
   // Try Spotify server-side first
   try {
     const token = await getSpotifyToken();

@@ -93,16 +93,26 @@ async function spotifySearch(query: string): Promise<SearchResult[] | null> {
 }
 
 export async function searchAlbums(query: string): Promise<SearchResult[]> {
-  // Try Spotify from browser (each user's own IP, no server rate limit)
-  const spotify = await spotifySearch(query);
-  if (spotify && spotify.length > 0) return spotify;
-
-  // Fallback: iTunes via server
-  // Clean query for better iTunes matching (remove dots, special chars)
   const cleanQuery = query.replace(/\./g, " ").replace(/\s+/g, " ").trim();
-  const searchQuery = cleanQuery !== query ? cleanQuery : query;
 
-  const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`);
-  const data = await res.json().catch(() => []);
-  return Array.isArray(data) ? data : [];
+  // Run Spotify (browser) and iTunes (server) in parallel
+  const [spotify, itunesData] = await Promise.all([
+    spotifySearch(query),
+    fetch(`/api/search?q=${encodeURIComponent(cleanQuery)}&source=itunes`)
+      .then(r => r.json()).catch(() => []),
+  ]);
+
+  const spotifyResults: SearchResult[] = spotify ?? [];
+  const itunesResults: SearchResult[] = Array.isArray(itunesData) ? itunesData : [];
+
+  // Merge: Spotify first, then iTunes items not already in Spotify
+  const seen = new Set(spotifyResults.map(s =>
+    `${s.name.toLowerCase().replace(/\s*[\[(].*?[\])]/gi, "").trim()}__${s.artist.split(/feat\.|ft\.|,/i)[0].toLowerCase().trim()}`
+  ));
+  const extras = itunesResults.filter(item => {
+    const key = `${item.name.toLowerCase().replace(/\s*[\[(].*?[\])]/gi, "").trim()}__${item.artist.split(/feat\.|ft\.|,/i)[0].toLowerCase().trim()}`;
+    return !seen.has(key);
+  });
+
+  return [...spotifyResults, ...extras];
 }
