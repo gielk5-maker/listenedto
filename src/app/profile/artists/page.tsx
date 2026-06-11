@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
-import TopArtiesten from "@/components/TopArtiesten";
+import ArtistenGrid from "./ArtistenGrid";
 
 export default async function AlleArtiestenPage() {
   const supabase = await createClient();
@@ -29,12 +29,11 @@ export default async function AlleArtiestenPage() {
   return (
     <div className="min-h-screen text-stone-50">
       <AppHeader right={<Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>} />
-
-      <main className="max-w-xl mx-auto px-5 py-8">
+      <main className="max-w-2xl mx-auto px-5 py-8">
         <h1 className="text-xl font-bold mb-6">
           All artists <span className="text-stone-500 font-normal text-base">({alleArtiesten.length})</span>
         </h1>
-        <TopArtiesten artiesten={alleArtiesten} showAll />
+        <ArtistenGrid artiesten={alleArtiesten} />
       </main>
     </div>
   );
