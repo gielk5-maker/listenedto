@@ -13,6 +13,7 @@ import LijstBeheer from "@/components/LijstBeheer";
 import RatingVerdeling from "@/components/RatingVerdeling";
 import ListeningStats from "@/components/ListeningStats";
 import VerifiedBadge from "@/components/VerifiedBadge";
+import TopArtiesten from "@/components/TopArtiesten";
 
 
 
@@ -73,9 +74,9 @@ export default async function ProfielPage() {
     artiestTelling[r.artist_name].count++;
     artiestTelling[r.artist_name].totalRating += r.rating;
   });
-  const topArtiesten = Object.entries(artiestTelling)
+  const alleArtiesten = Object.entries(artiestTelling)
     .sort((a, b) => b[1].count - a[1].count || b[1].totalRating - a[1].totalRating)
-    .slice(0, 5);
+    .map(([naam, info]) => ({ naam, ...info }));
 
   const verdeling: Record<string, number> = { "5": 0, "4.5": 0, "4": 0, "3.5": 0, "3": 0, "2.5": 0, "2": 0, "1.5": 0, "1": 0, "0.5": 0 };
   ratings?.forEach((r) => { verdeling[String(r.rating)] = (verdeling[String(r.rating)] ?? 0) + 1; });
@@ -127,23 +128,8 @@ export default async function ProfielPage() {
 
         {aantalRatings > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {topArtiesten.length > 0 && (
-              <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60">
-                <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Most rated</h2>
-                <div className="space-y-3">
-                  {topArtiesten.map(([artiest, info], i) => (
-                    <div key={artiest} className="flex items-center gap-3">
-                      <span className="text-stone-700 text-xs w-4 font-medium">{i + 1}</span>
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/artist?name=${encodeURIComponent(artiest)}`} className="text-sm font-semibold truncate text-stone-100 hover:text-[var(--accent)] transition-colors block">{artiest}</Link>
-                        <p className="text-stone-600 text-xs">
-                          {info.count} {info.count === 1 ? "listen" : "listens"} · avg. {(info.totalRating / info.count).toFixed(1)} ★
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+            {alleArtiesten.length > 0 && (
+              <TopArtiesten artiesten={alleArtiesten} />
             )}
             <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60">
               <h2 className="text-xs text-stone-600 uppercase tracking-widest mb-4 font-semibold">Rating distribution</h2>
