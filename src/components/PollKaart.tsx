@@ -216,23 +216,35 @@ export default function PollKaart({ userId, canVoteUnlimited = false }: { userId
   return (
     <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60 mb-6 space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold">
-          {isHotTake ? "🔥 Hot Take" : canVoteUnlimited ? "Poll" : "Daily Poll"}
-        </p>
-        <div className="flex items-center gap-2">
-          {canVoteUnlimited && (
-            <div className="flex items-center gap-1">
-              <button onClick={() => { setPoll(null); setVoted(null); setImageA(null); setImageB(null); setPollIndex(i => i - 1); }}
-                className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors text-xs">‹</button>
-              <span className="text-[10px] text-stone-700 w-16 text-center">#{((Math.floor(Date.now() / 86400000) + pollIndex) % POLLS.length) + 1} / {POLLS.length}</span>
-              <button onClick={() => { setPoll(null); setVoted(null); setImageA(null); setImageB(null); setPollIndex(i => i + 1); }}
-                className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors text-xs">›</button>
+      {(() => {
+        const pollDate = new Date(Date.now() + pollIndex * 86400000);
+        const isToday = pollIndex === 0;
+        return (
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold">
+              {isHotTake ? "🔥 Hot Take" : isToday ? "Daily Poll" : "Poll"}
+            </p>
+            <div className="flex items-center gap-2">
+              {canVoteUnlimited && (
+                <div className="flex items-center gap-1">
+                  <button
+                    disabled={pollIndex <= -10}
+                    onClick={() => { setPoll(null); setVoted(null); setImageA(null); setImageB(null); setPollIndex(i => Math.max(i - 1, -10)); }}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors text-xs disabled:opacity-30 disabled:cursor-not-allowed">‹</button>
+                  <span className="text-[10px] text-stone-600 w-8 text-center">
+                    {pollIndex === 0 ? "today" : pollIndex > 0 ? `+${pollIndex}d` : `${pollIndex}d`}
+                  </span>
+                  <button
+                    disabled={pollIndex >= 10}
+                    onClick={() => { setPoll(null); setVoted(null); setImageA(null); setImageB(null); setPollIndex(i => Math.min(i + 1, 10)); }}
+                    className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors text-xs disabled:opacity-30 disabled:cursor-not-allowed">›</button>
+                </div>
+              )}
+              <p className="text-[10px] text-stone-700">{pollDate.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
             </div>
-          )}
-          <p className="text-[10px] text-stone-700">{new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
-        </div>
-      </div>
+          </div>
+        );
+      })()}
 
       <p className="text-stone-200 font-semibold">{poll.question}</p>
 
