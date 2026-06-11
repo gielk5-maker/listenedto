@@ -62,12 +62,15 @@ async function spotifySearch(query: string): Promise<SearchResult[] | null> {
     if (!token) return null;
 
     const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=20`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const albums = data.albums?.items ?? [];
+    const albums = [
+      ...(data.albums?.items ?? []),
+      ...(data.compilations?.items ?? []),
+    ];
 
     const results = albums
       .filter((a: Record<string, unknown>) => {

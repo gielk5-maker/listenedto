@@ -69,13 +69,16 @@ export async function GET(request: NextRequest) {
     const token = await getSpotifyToken();
     if (token) {
       const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=20`,
         { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
       if (res.ok) {
         const data = await res.json().catch(() => null);
         if (data) {
-          const mapped = mapSpotifyAlbums(data.albums?.items ?? []);
+          const mapped = mapSpotifyAlbums([
+            ...(data.albums?.items ?? []),
+            ...(data.compilations?.items ?? []),
+          ]);
           if (mapped.length > 0) return NextResponse.json(mapped);
         }
       }
