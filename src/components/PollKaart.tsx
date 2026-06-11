@@ -169,11 +169,7 @@ export default function PollKaart({ userId, canVoteUnlimited = false }: { userId
   async function vote(choice: "a" | "b") {
     if (!poll || voting) return;
     setVoting(true);
-    if (canVoteUnlimited) {
-      await supabase.from("poll_votes").upsert({ user_id: userId, poll_id: poll.id, vote: choice }, { onConflict: "user_id,poll_id" });
-    } else {
-      await supabase.from("poll_votes").insert({ user_id: userId, poll_id: poll.id, vote: choice });
-    }
+    await supabase.from("poll_votes").insert({ user_id: userId, poll_id: poll.id, vote: choice });
     const { data: allVotes } = await supabase.from("poll_votes").select("vote").eq("poll_id", poll.id);
     const a = (allVotes ?? []).filter(v => v.vote === "a").length;
     const b = (allVotes ?? []).filter(v => v.vote === "b").length;
@@ -329,7 +325,7 @@ export default function PollKaart({ userId, canVoteUnlimited = false }: { userId
             <p className="text-stone-700 text-xs">{total} {total === 1 ? "vote" : "votes"}</p>
             {canVoteUnlimited && (
               <button onClick={() => setVoted(null)} className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors">
-                Change vote
+                Vote again
               </button>
             )}
           </div>
