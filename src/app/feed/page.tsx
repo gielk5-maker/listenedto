@@ -21,6 +21,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
   if (!user) redirect("/login");
 
   const eigenUsername = user.user_metadata?.username ?? user.email;
+  const kanOnbeperktStemmen = isVerified(eigenUsername);
 
   const { data: gevolgden } = await supabase
     .from("follows").select("following_id").eq("follower_id", user.id);
@@ -235,7 +236,7 @@ export default async function FeedPage({ searchParams }: { searchParams: Promise
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Feed kolom */}
           <div className="w-full lg:max-w-2xl flex-1">
-            <PollKaart userId={user.id} />
+            <PollKaart userId={user.id} canVoteUnlimited={kanOnbeperktStemmen} />
 
             {activeTab === "friends" ? (() => {
               // Merge ratings and concerts sorted by created_at

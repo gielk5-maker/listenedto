@@ -77,7 +77,8 @@ async function fetchAlbumImage(album: string, artist: string): Promise<string | 
 
 type Comment = { id: string; user_id: string; username: string; content: string; created_at: string; likeCount: number; liked: boolean };
 
-export default function PollKaart({ userId }: { userId: string }) {
+export default function PollKaart({ userId, canVoteUnlimited = false }: { userId: string; canVoteUnlimited?: boolean }) {
+  const [pollIndex, setPollIndex] = useState(0);
   const [poll, setPoll] = useState<Poll | null>(null);
   const [voted, setVoted] = useState<string | null>(null);
   const [counts, setCounts] = useState<{ a: number; b: number }>({ a: 0, b: 0 });
@@ -99,7 +100,11 @@ export default function PollKaart({ userId }: { userId: string }) {
   useEffect(() => {
     async function findEligiblePoll() {
       const daysSinceEpoch = Math.floor(Date.now() / 86400000);
-      const p = POLLS[daysSinceEpoch % POLLS.length];
+      const baseIndex = daysSinceEpoch % POLLS.length;
+      const idx = canVoteUnlimited
+        ? ((baseIndex + pollIndex) % POLLS.length)
+        : baseIndex;
+      const p = POLLS[idx];
 
       const [votesRes, profileRes] = await Promise.all([
         supabase.from("poll_votes").select("poll_id, vote").eq("user_id", userId),
@@ -159,12 +164,16 @@ export default function PollKaart({ userId }: { userId: string }) {
       setLoading(false);
     }
     findEligiblePoll();
-  }, [userId]);
+  }, [userId, pollIndex]);
 
   async function vote(choice: "a" | "b") {
     if (!poll || voting) return;
     setVoting(true);
-    await supabase.from("poll_votes").insert({ user_id: userId, poll_id: poll.id, vote: choice });
+    if (canVoteUnlimited) {
+      await supabase.from("poll_votes").upsert({ user_id: userId, poll_id: poll.id, vote: choice }, { onConflict: "user_id,poll_id" });
+    } else {
+      await supabase.from("poll_votes").insert({ user_id: userId, poll_id: poll.id, vote: choice });
+    }
     const { data: allVotes } = await supabase.from("poll_votes").select("vote").eq("poll_id", poll.id);
     const a = (allVotes ?? []).filter(v => v.vote === "a").length;
     const b = (allVotes ?? []).filter(v => v.vote === "b").length;
@@ -209,9 +218,20 @@ export default function PollKaart({ userId }: { userId: string }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-[10px] text-stone-600 uppercase tracking-widest font-semibold">
-          {isHotTake ? "🔥 Hot Take" : "Daily Poll"}
+          {isHotTake ? "🔥 Hot Take" : canVoteUnlimited ? "Poll" : "Daily Poll"}
         </p>
-        <p className="text-[10px] text-stone-700">{new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
+        <div className="flex items-center gap-2">
+          {canVoteUnlimited && (
+            <div className="flex items-center gap-1">
+              <button onClick={() => { setPoll(null); setVoted(null); setImageA(null); setImageB(null); setPollIndex(i => i - 1); }}
+                className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors text-xs">‹</button>
+              <span className="text-[10px] text-stone-700 w-16 text-center">#{((Math.floor(Date.now() / 86400000) + pollIndex) % POLLS.length) + 1} / {POLLS.length}</span>
+              <button onClick={() => { setPoll(null); setVoted(null); setImageA(null); setImageB(null); setPollIndex(i => i + 1); }}
+                className="w-6 h-6 flex items-center justify-center rounded-lg text-stone-500 hover:text-stone-200 hover:bg-stone-800 transition-colors text-xs">›</button>
+            </div>
+          )}
+          <p className="text-[10px] text-stone-700">{new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</p>
+        </div>
       </div>
 
       <p className="text-stone-200 font-semibold">{poll.question}</p>
@@ -293,7 +313,14 @@ export default function PollKaart({ userId }: { userId: string }) {
               </div>
             );
           })}
-          <p className="text-stone-700 text-xs">{total} {total === 1 ? "vote" : "votes"}</p>
+          <div className="flex items-center justify-between">
+            <p className="text-stone-700 text-xs">{total} {total === 1 ? "vote" : "votes"}</p>
+            {canVoteUnlimited && (
+              <button onClick={() => setVoted(null)} className="text-[10px] text-stone-600 hover:text-stone-400 transition-colors">
+                Change vote
+              </button>
+            )}
+          </div>
         </div>
       )}
 
