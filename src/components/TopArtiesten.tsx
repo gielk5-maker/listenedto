@@ -11,10 +11,10 @@ type Artiest = {
 
 type Props = {
   artiesten: Artiest[];
+  showAll?: boolean;
 };
 
-export default function TopArtiesten({ artiesten }: Props) {
-  const [showAll, setShowAll] = useState(false);
+export default function TopArtiesten({ artiesten, showAll = false }: Props) {
   const [images, setImages] = useState<Record<string, string | null>>({});
 
   const visible = showAll ? artiesten : artiesten.slice(0, 5);
@@ -58,13 +58,13 @@ export default function TopArtiesten({ artiesten }: Props) {
           </div>
         ))}
       </div>
-      {artiesten.length > 5 && (
-        <button
-          onClick={() => setShowAll(v => !v)}
-          className="mt-4 w-full text-center text-xs text-stone-500 hover:text-stone-300 transition-colors py-1"
+      {!showAll && artiesten.length > 5 && (
+        <Link
+          href="/profile/artists"
+          className="mt-4 block w-full text-center text-xs text-stone-500 hover:text-stone-300 transition-colors py-1"
         >
-          {showAll ? "Show less ↑" : `See all ${artiesten.length} artists ↓`}
-        </button>
+          See all {artiesten.length} artists →
+        </Link>
       )}
     </div>
   );
