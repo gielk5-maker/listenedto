@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
     const token = await getSpotifyToken();
     if (token) {
       const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=20`,
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=50`,
         { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
       if (res.ok) {

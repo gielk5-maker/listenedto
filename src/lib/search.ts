@@ -62,7 +62,7 @@ async function spotifySearch(query: string): Promise<SearchResult[] | null> {
     if (!token) return null;
 
     const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=20`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=50`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) return null;
