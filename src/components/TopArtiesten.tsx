@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 
 type Artiest = {
   naam: string;
   count: number;
   totalRating: number;
+  image: string | null;
 };
 
 type Props = {
@@ -15,31 +15,7 @@ type Props = {
 };
 
 export default function TopArtiesten({ artiesten, showAll = false }: Props) {
-  const [images, setImages] = useState<Record<string, string | null>>({});
-
   const visible = showAll ? artiesten : artiesten.slice(0, 5);
-
-  useEffect(() => {
-    const names = visible.map(a => a.naam);
-    if (names.length === 0) return;
-
-    async function load() {
-      const CHUNK = 5;
-      for (let i = 0; i < names.length; i += CHUNK) {
-        const chunk = names.slice(i, i + CHUNK);
-        try {
-          const res = await fetch("/api/artist-images", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ artists: chunk }),
-          });
-          const data = await res.json();
-          setImages(prev => ({ ...prev, ...data }));
-        } catch {}
-      }
-    }
-    load();
-  }, [visible.length]);
 
   return (
     <div className="bg-stone-900 rounded-3xl p-5 border border-stone-800/60">
@@ -49,8 +25,8 @@ export default function TopArtiesten({ artiesten, showAll = false }: Props) {
           <div key={artiest.naam} className="flex items-center gap-3">
             <span className="text-stone-700 text-xs w-4 font-medium">{i + 1}</span>
             <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden bg-stone-800">
-              {images[artiest.naam]
-                ? <img src={images[artiest.naam]!} alt={artiest.naam} className="w-full h-full object-cover" />
+              {artiest.image
+                ? <img src={artiest.image} alt={artiest.naam} className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-stone-600 text-xs font-bold">
                     {artiest.naam[0]?.toUpperCase()}
                   </div>

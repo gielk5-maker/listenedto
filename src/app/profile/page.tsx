@@ -68,9 +68,9 @@ export default async function ProfielPage() {
     ? (ratings!.reduce((sum, r) => sum + r.rating, 0) / aantalRatings).toFixed(1)
     : null;
 
-  const artiestTelling: Record<string, { count: number; totalRating: number }> = {};
+  const artiestTelling: Record<string, { count: number; totalRating: number; image: string | null }> = {};
   ratings?.forEach((r) => {
-    if (!artiestTelling[r.artist_name]) artiestTelling[r.artist_name] = { count: 0, totalRating: 0 };
+    if (!artiestTelling[r.artist_name]) artiestTelling[r.artist_name] = { count: 0, totalRating: 0, image: r.album_image ?? null };
     artiestTelling[r.artist_name].count++;
     artiestTelling[r.artist_name].totalRating += r.rating;
   });

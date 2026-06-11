@@ -16,13 +16,13 @@ export default async function AlleArtiestenPage({ searchParams }: { searchParams
 
   const { data: ratingsRaw } = await supabase
     .from("ratings")
-    .select("artist_name, rating")
+    .select("artist_name, rating, album_image")
     .eq("user_id", user.id)
     .not("rating", "is", null);
 
-  const artiestTelling: Record<string, { count: number; totalRating: number }> = {};
+  const artiestTelling: Record<string, { count: number; totalRating: number; image: string | null }> = {};
   (ratingsRaw ?? []).forEach((r) => {
-    if (!artiestTelling[r.artist_name]) artiestTelling[r.artist_name] = { count: 0, totalRating: 0 };
+    if (!artiestTelling[r.artist_name]) artiestTelling[r.artist_name] = { count: 0, totalRating: 0, image: r.album_image ?? null };
     artiestTelling[r.artist_name].count++;
     artiestTelling[r.artist_name].totalRating += r.rating;
   });

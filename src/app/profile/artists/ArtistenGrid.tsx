@@ -1,39 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 
 type Artiest = {
   naam: string;
   count: number;
   totalRating: number;
+  image: string | null;
 };
 
 export default function ArtistenGrid({ artiesten }: { artiesten: Artiest[] }) {
-  const [images, setImages] = useState<Record<string, string | null>>({});
-
-  useEffect(() => {
-    const names = artiesten.map(a => a.naam);
-    if (names.length === 0) return;
-
-    async function loadInChunks() {
-      const CHUNK = 5;
-      for (let i = 0; i < names.length; i += CHUNK) {
-        const chunk = names.slice(i, i + CHUNK);
-        try {
-          const res = await fetch("/api/artist-images", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ artists: chunk }),
-          });
-          const data = await res.json();
-          setImages(prev => ({ ...prev, ...data }));
-        } catch {}
-      }
-    }
-    loadInChunks();
-  }, []);
-
   return (
     <div className="grid grid-cols-4 gap-4">
       {artiesten.map((artiest) => (
@@ -43,8 +19,8 @@ export default function ArtistenGrid({ artiesten }: { artiesten: Artiest[] }) {
           className="group"
         >
           <div className="relative aspect-square rounded-2xl overflow-hidden bg-stone-800 shadow-lg shadow-black/40 mb-2.5 group-hover:opacity-80 transition-opacity">
-            {images[artiest.naam]
-              ? <img src={images[artiest.naam]!} alt={artiest.naam} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+            {artiest.image
+              ? <img src={artiest.image} alt={artiest.naam} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
               : <div className="w-full h-full flex items-center justify-center text-stone-500 text-3xl font-bold">
                   {artiest.naam[0]?.toUpperCase()}
                 </div>
