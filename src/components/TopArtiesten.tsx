@@ -23,14 +23,22 @@ export default function TopArtiesten({ artiesten, showAll = false }: Props) {
     const names = visible.map(a => a.naam);
     if (names.length === 0) return;
 
-    fetch("/api/artist-images", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ artists: names }),
-    })
-      .then(r => r.json())
-      .then(data => setImages(prev => ({ ...prev, ...data })))
-      .catch(() => {});
+    async function load() {
+      const CHUNK = 5;
+      for (let i = 0; i < names.length; i += CHUNK) {
+        const chunk = names.slice(i, i + CHUNK);
+        try {
+          const res = await fetch("/api/artist-images", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ artists: chunk }),
+          });
+          const data = await res.json();
+          setImages(prev => ({ ...prev, ...data }));
+        } catch {}
+      }
+    }
+    load();
   }, [visible.length]);
 
   return (
