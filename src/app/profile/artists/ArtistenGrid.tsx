@@ -13,16 +13,17 @@ export default function ArtistenGrid({ artiesten }: { artiesten: Artiest[] }) {
   const [images, setImages] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
-    artiesten.forEach(async (a) => {
-      if (a.naam in images) return;
-      try {
-        const res = await fetch(`/api/artist-image?artist=${encodeURIComponent(a.naam)}`);
-        const data = await res.json();
-        setImages(prev => ({ ...prev, [a.naam]: data.image ?? null }));
-      } catch {
-        setImages(prev => ({ ...prev, [a.naam]: null }));
-      }
-    });
+    const names = artiesten.map(a => a.naam);
+    if (names.length === 0) return;
+
+    fetch("/api/artist-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ artists: names }),
+    })
+      .then(r => r.json())
+      .then(data => setImages(data))
+      .catch(() => {});
   }, []);
 
   return (

@@ -20,18 +20,17 @@ export default function TopArtiesten({ artiesten, showAll = false }: Props) {
   const visible = showAll ? artiesten : artiesten.slice(0, 5);
 
   useEffect(() => {
-    const missing = visible.filter(a => !(a.naam in images));
-    if (missing.length === 0) return;
+    const names = visible.map(a => a.naam);
+    if (names.length === 0) return;
 
-    missing.forEach(async (a) => {
-      try {
-        const res = await fetch(`/api/artist-image?artist=${encodeURIComponent(a.naam)}`);
-        const data = await res.json();
-        setImages(prev => ({ ...prev, [a.naam]: data.image ?? null }));
-      } catch {
-        setImages(prev => ({ ...prev, [a.naam]: null }));
-      }
-    });
+    fetch("/api/artist-images", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ artists: names }),
+    })
+      .then(r => r.json())
+      .then(data => setImages(prev => ({ ...prev, ...data })))
+      .catch(() => {});
   }, [visible.length]);
 
   return (
