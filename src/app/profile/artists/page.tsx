@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import AppHeader from "@/components/AppHeader";
 import ArtistenGrid from "./ArtistenGrid";
+import { getArtistImages } from "@/lib/artistImages";
 
 const PER_PAGE = 24;
 
@@ -35,6 +36,9 @@ export default async function AlleArtiestenPage({ searchParams }: { searchParams
   const offset = (page - 1) * PER_PAGE;
   const paginaArtiesten = alleArtiesten.slice(offset, offset + PER_PAGE);
 
+  const imageMap = await getArtistImages(paginaArtiesten.map(a => a.naam));
+  const paginaMetImages = paginaArtiesten.map(a => ({ ...a, image: imageMap[a.naam] ?? null }));
+
   return (
     <div className="min-h-screen text-stone-50">
       <AppHeader right={<Link href="/profile" className="text-stone-500 hover:text-stone-200 text-sm transition-colors">← Profile</Link>} />
@@ -43,7 +47,7 @@ export default async function AlleArtiestenPage({ searchParams }: { searchParams
           All artists <span className="text-stone-500 font-normal text-base">({alleArtiesten.length})</span>
         </h1>
 
-        <ArtistenGrid artiesten={paginaArtiesten} />
+        <ArtistenGrid artiesten={paginaMetImages} />
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between border-t border-stone-800/60 pt-6 mt-8">

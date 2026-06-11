@@ -14,6 +14,7 @@ import RatingVerdeling from "@/components/RatingVerdeling";
 import ListeningStats from "@/components/ListeningStats";
 import VerifiedBadge from "@/components/VerifiedBadge";
 import TopArtiesten from "@/components/TopArtiesten";
+import { getArtistImages } from "@/lib/artistImages";
 
 
 
@@ -74,9 +75,16 @@ export default async function ProfielPage() {
     artiestTelling[r.artist_name].count++;
     artiestTelling[r.artist_name].totalRating += r.rating;
   });
-  const alleArtiesten = Object.entries(artiestTelling)
+  const alleArtiestenRaw = Object.entries(artiestTelling)
     .sort((a, b) => b[1].count - a[1].count || b[1].totalRating - a[1].totalRating)
     .map(([naam, info]) => ({ naam, ...info }));
+
+  const top5Names = alleArtiestenRaw.slice(0, 5).map(a => a.naam);
+  const top5Images = await getArtistImages(top5Names);
+  const alleArtiesten = alleArtiestenRaw.map(a => ({
+    ...a,
+    image: top5Images[a.naam] ?? a.image,
+  }));
 
   const verdeling: Record<string, number> = { "5": 0, "4.5": 0, "4": 0, "3.5": 0, "3": 0, "2.5": 0, "2": 0, "1.5": 0, "1": 0, "0.5": 0 };
   ratings?.forEach((r) => { verdeling[String(r.rating)] = (verdeling[String(r.rating)] ?? 0) + 1; });
