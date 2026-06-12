@@ -40,7 +40,7 @@ async function spotifySearch(query: string): Promise<{ albums: SearchResult[]; a
     if (!res.ok) return null;
     const data = await res.json();
 
-    const albums = dedup(
+    const albums: SearchResult[] = dedup(
       (data.albums?.items ?? [])
         .filter((a: Record<string, unknown>) => {
           if (a.album_type === "single") return false;
@@ -48,7 +48,7 @@ async function spotifySearch(query: string): Promise<{ albums: SearchResult[]; a
           const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
           return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
         })
-        .map((a: Record<string, unknown>) => ({
+        .map((a: Record<string, unknown>): SearchResult => ({
           name: a.name as string,
           artist: (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "",
           image: (a.images as Array<Record<string, string>>)?.[0]?.url ?? null,
@@ -57,7 +57,7 @@ async function spotifySearch(query: string): Promise<{ albums: SearchResult[]; a
         }))
     );
 
-    const artists = (data.artists?.items ?? [])
+    const artists: ArtistResult[] = (data.artists?.items ?? [])
       .filter((a: Record<string, unknown>) => {
         if (nietLatijn.test(a.name as string)) return false;
         const followers = (a.followers as Record<string, number>)?.total ?? 0;
@@ -65,7 +65,7 @@ async function spotifySearch(query: string): Promise<{ albums: SearchResult[]; a
         return followers > 0 || popularity > 0;
       })
       .slice(0, 3)
-      .map((a: Record<string, unknown>) => ({
+      .map((a: Record<string, unknown>): ArtistResult => ({
         name: a.name as string,
         image: (a.images as Array<Record<string, string>>)?.[0]?.url ?? null,
       }));
