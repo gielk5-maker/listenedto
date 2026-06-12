@@ -80,14 +80,17 @@ async function spotifySearch(query: string): Promise<{ albums: SearchResult[]; a
 export async function searchAlbumsAndArtists(query: string): Promise<{ albums: SearchResult[]; artists: ArtistResult[] }> {
   const cleanQuery = query.replace(/\./g, " ").replace(/\s+/g, " ").trim();
 
-  const [spotify, itunesData] = await Promise.all([
+  const [spotify, itunesData, artistsData] = await Promise.all([
     spotifySearch(query),
     fetch(`/api/search?q=${encodeURIComponent(cleanQuery)}&source=itunes`)
+      .then(r => r.json()).catch(() => []),
+    fetch(`/api/search-artists?q=${encodeURIComponent(query)}`)
       .then(r => r.json()).catch(() => []),
   ]);
 
   const spotifyAlbums: SearchResult[] = spotify?.albums ?? [];
   const itunesResults: SearchResult[] = Array.isArray(itunesData) ? itunesData : [];
+  const artists: ArtistResult[] = Array.isArray(artistsData) ? artistsData : [];
 
   const seen = new Set(spotifyAlbums.map(s =>
     `${s.name.toLowerCase().replace(/\s*[\[(].*?[\])]/gi, "").trim()}__${s.artist.split(/feat\.|ft\.|,/i)[0].toLowerCase().trim()}`
@@ -99,7 +102,7 @@ export async function searchAlbumsAndArtists(query: string): Promise<{ albums: S
 
   return {
     albums: [...spotifyAlbums, ...extras],
-    artists: spotify?.artists ?? [],
+    artists,
   };
 }
 
