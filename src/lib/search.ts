@@ -86,32 +86,23 @@ function dedupResults(items: SearchResult[]): SearchResult[] {
   });
 }
 
-// Combined search: artists first, then title-albums + artist-albums in parallel
+// Combined search: all fetches in parallel
 export async function searchAlbumsAndArtists(query: string): Promise<{ albums: SearchResult[]; artists: ArtistResult[] }> {
   const cleanQuery = query.replace(/\./g, " ").replace(/\s+/g, " ").trim();
 
-  // Step 1: fetch artists (server-side, fast)
-  const artists: ArtistResult[] = await fetch(`/api/search-artists?q=${encodeURIComponent(query)}`)
-    .then(r => r.json()).catch(() => []);
-
-  // Step 2: fetch title-albums + artist-albums + Spotify in parallel
-  const topArtist = Array.isArray(artists) && artists[0]?.name;
-  const [spotify, titleAlbums, artistAlbums] = await Promise.all([
+  const [spotify, itunesData, artistsData] = await Promise.all([
     spotifySearch(query),
     fetch(`/api/search?q=${encodeURIComponent(cleanQuery)}&source=itunes`).then(r => r.json()).catch(() => []),
-    topArtist
-      ? fetch(`/api/search?q=${encodeURIComponent(topArtist)}&source=itunes`).then(r => r.json()).catch(() => [])
-      : Promise.resolve([]),
+    fetch(`/api/search-artists?q=${encodeURIComponent(query)}`).then(r => r.json()).catch(() => []),
   ]);
 
   const spotifyAlbums: SearchResult[] = spotify?.albums ?? [];
-  const titleResults: SearchResult[] = Array.isArray(titleAlbums) ? titleAlbums : [];
-  const artistResults: SearchResult[] = Array.isArray(artistAlbums) ? artistAlbums : [];
+  const itunesResults: SearchResult[] = Array.isArray(itunesData) ? itunesData : [];
+  const artists: ArtistResult[] = Array.isArray(artistsData) ? artistsData : [];
 
-  // Merge: Spotify first, then title matches, then artist albums
   return {
-    albums: dedupResults([...spotifyAlbums, ...titleResults, ...artistResults]),
-    artists: Array.isArray(artists) ? artists : [],
+    albums: dedupResults([...spotifyAlbums, ...itunesResults]),
+    artists,
   };
 }
 
