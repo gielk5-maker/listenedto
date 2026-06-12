@@ -62,18 +62,16 @@ async function spotifySearch(query: string): Promise<SearchResult[] | null> {
     if (!token) return null;
 
     const res = await fetch(
-      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=50`,
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=50`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const albums = [
-      ...(data.albums?.items ?? []),
-      ...(data.compilations?.items ?? []),
-    ];
+    const albums = data.albums?.items ?? [];
 
     const results = albums
       .filter((a: Record<string, unknown>) => {
+        if (a.album_type === "single") return false;
         const naam = a.name as string;
         const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
         return !nietLatijn.test(naam) && !nietLatijn.test(artiest);

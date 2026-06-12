@@ -47,6 +47,7 @@ async function itunesSearch(query: string) {
 function mapSpotifyAlbums(items: Record<string, unknown>[]) {
   return dedup(items
     .filter(a => {
+      if (a.album_type === "single") return false;
       const naam = a.name as string;
       const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
       return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
@@ -75,16 +76,13 @@ export async function GET(request: NextRequest) {
     const token = await getSpotifyToken();
     if (token) {
       const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album,compilation&limit=50`,
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=50`,
         { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
       if (res.ok) {
         const data = await res.json().catch(() => null);
         if (data) {
-          const mapped = mapSpotifyAlbums([
-            ...(data.albums?.items ?? []),
-            ...(data.compilations?.items ?? []),
-          ]);
+          const mapped = mapSpotifyAlbums(data.albums?.items ?? []);
           if (mapped.length > 0) return NextResponse.json(mapped);
         }
       }
