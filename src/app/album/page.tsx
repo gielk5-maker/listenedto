@@ -202,6 +202,7 @@ function AlbumPageInner() {
   const [error, setError] = useState<string | null>(null);
   const [communityReviews, setCommunityReviews] = useState<CommunityReview[]>([]);
   const [communityStats, setCommunityStats] = useState<{ avg: number; total: number } | null>(null);
+  const [genres, setGenres] = useState<string[]>([]);
 
   useEffect(() => {
     // Reset all state when album changes
@@ -213,6 +214,16 @@ function AlbumPageInner() {
     setReview("");
     setCommunityReviews([]);
     setCommunityStats(null);
+    setGenres([]);
+
+    // Fetch genres in parallel
+    const genreParams = new URLSearchParams();
+    if (url) genreParams.set("url", url);
+    if (artist) genreParams.set("artist", artist);
+    if (name) genreParams.set("album", name);
+    fetch(`/api/genres?${genreParams}`).then(r => r.json()).then(g => {
+      if (Array.isArray(g)) setGenres(g);
+    }).catch(() => {});
 
     async function load() {
       const { data: { user } } = await supabase.auth.getUser();
@@ -463,6 +474,19 @@ function AlbumPageInner() {
                 : <div className="h-6 w-8 bg-stone-800 rounded animate-pulse mt-0.5" />
               }
             </div>
+            {genres.length > 0 && (
+              <>
+                <div className="w-px h-8 bg-stone-800" />
+                <div>
+                  <p className="text-[10px] text-stone-600 uppercase tracking-widest mb-1.5">Genres</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {genres.map(g => (
+                      <span key={g} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-stone-800 text-stone-400 capitalize">{g}</span>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Reviews from others */}
