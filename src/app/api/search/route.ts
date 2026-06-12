@@ -33,10 +33,7 @@ async function itunesSearch(query: string) {
       const type = a.collectionType as string ?? "";
       const tracks = a.trackCount as number ?? 0;
       if (!name || !artist) return false;
-      const nameLower = name.toLowerCase();
-      if (nameLower.endsWith("- single") || nameLower.endsWith("- ep")) return false;
-      if ((a.collectionType as string) === "Single") return false;
-      return !nietLatijn.test(name) && !nietLatijn.test(artist);
+      return name && artist && !nietLatijn.test(name) && !nietLatijn.test(artist);
     })
     .map((a: Record<string, unknown>) => ({
       name: a.collectionName as string,
@@ -50,7 +47,6 @@ async function itunesSearch(query: string) {
 function mapSpotifyAlbums(items: Record<string, unknown>[]) {
   return dedup(items
     .filter(a => {
-      if (a.album_type === "single") return false;
       const naam = a.name as string;
       const artiest = (a.artists as Array<Record<string, string>>)?.[0]?.name ?? "";
       return !nietLatijn.test(naam) && !nietLatijn.test(artiest);
@@ -67,12 +63,6 @@ function mapSpotifyAlbums(items: Record<string, unknown>[]) {
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   if (!query) return NextResponse.json([]);
-
-  // If source=itunes, skip Spotify and go straight to iTunes
-  if (request.nextUrl.searchParams.get("source") === "itunes") {
-    const cleanQuery = query.replace(/\./g, " ").trim();
-    return NextResponse.json(await itunesSearch(cleanQuery));
-  }
 
   // Try Spotify server-side first
   try {
