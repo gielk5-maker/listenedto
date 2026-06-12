@@ -93,34 +93,18 @@ export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get("q");
   if (!query) return NextResponse.json({ albums: [], artists: [] });
 
-  const clean = query.replace(/\./g, " ").replace(/\s+/g, " ").trim();
-
-  // Try Spotify first
   try {
     const token = await getSpotifyToken();
     if (token) {
       const spotify = await spotifySearch(query, token);
       if (spotify) {
-        const albums = spotify.albums.slice(0, 9);
-        const artists = spotify.artists;
-
-        // Supplement albums with iTunes if fewer than 9
-        if (albums.length < 9) {
-          const extra = await itunesAlbums(clean);
-          const seenKeys = new Set(albums.map(a => `${a.name.toLowerCase().replace(/\s*[\[(].*?[\])]/gi, "").trim()}__${a.artist.split(/feat\.|ft\.|,/i)[0].toLowerCase().trim()}`));
-          for (const a of extra) {
-            const key = `${a.name.toLowerCase().replace(/\s*[\[(].*?[\])]/gi, "").trim()}__${a.artist.split(/feat\.|ft\.|,/i)[0].toLowerCase().trim()}`;
-            if (!seenKeys.has(key)) { albums.push(a); seenKeys.add(key); }
-            if (albums.length >= 9) break;
-          }
-        }
-
-        return NextResponse.json({ albums, artists });
+        return NextResponse.json({
+          albums: spotify.albums.slice(0, 9),
+          artists: spotify.artists,
+        });
       }
     }
   } catch { /* fall through */ }
 
-  // Full iTunes fallback
-  const [albums, artists] = await Promise.all([itunesAlbums(clean), itunesArtists(clean)]);
-  return NextResponse.json({ albums: albums.slice(0, 9), artists });
+  return NextResponse.json({ albums: [], artists: [] });
 }
