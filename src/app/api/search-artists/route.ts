@@ -21,12 +21,7 @@ export async function GET(request: NextRequest) {
 
     const data = await res.json();
     const artists = ((data.artists?.items ?? []) as Record<string, unknown>[])
-      .filter(a => {
-        if (nietLatijn.test(a.name as string)) return false;
-        const followers = (a.followers as Record<string, number>)?.total ?? 0;
-        const popularity = (a.popularity as number) ?? 0;
-        return followers > 0 || popularity > 0;
-      })
+      .filter(a => !!a.name && !nietLatijn.test(a.name as string))
       .slice(0, 3)
       .map(a => ({
         name: a.name as string,
