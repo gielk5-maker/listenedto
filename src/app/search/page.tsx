@@ -5,7 +5,7 @@ import AppHeader from "@/components/AppHeader";
 import AlbumCover from "@/components/AlbumCover";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { searchAlbums, searchArtists, type ArtistResult } from "@/lib/search";
+import { searchAlbumsAndArtists, type ArtistResult } from "@/lib/search";
 import RandomAlbumButton from "@/components/RandomAlbumButton";
 import { createClient } from "@/lib/supabase/client";
 import VerifiedBadge from "@/components/VerifiedBadge";
@@ -130,7 +130,7 @@ function ZoekenInner() {
     if (!q.trim()) return;
     setAlbumLoading(true);
     setAlbumSearched(true);
-    const [albRes, artRes] = await Promise.all([searchAlbums(q.trim()), searchArtists(q.trim())]);
+    const { albums: albRes, artists: artRes } = await searchAlbumsAndArtists(q.trim());
     setAlbumResults(albRes);
     setArtists(artRes);
     setAlbumLoading(false);

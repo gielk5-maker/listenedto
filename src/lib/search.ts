@@ -76,26 +76,20 @@ async function spotifySearch(query: string): Promise<{ albums: SearchResult[]; a
   }
 }
 
-export async function searchArtists(query: string): Promise<ArtistResult[]> {
-  const result = await spotifySearch(query);
-  return result?.artists ?? [];
-}
-
-export async function searchAlbums(query: string): Promise<SearchResult[]> {
+// Combined search: one Spotify call for both albums and artists + iTunes supplement
+export async function searchAlbumsAndArtists(query: string): Promise<{ albums: SearchResult[]; artists: ArtistResult[] }> {
   const cleanQuery = query.replace(/\./g, " ").replace(/\s+/g, " ").trim();
 
-  // Single Spotify call + iTunes in parallel
   const [spotify, itunesData] = await Promise.all([
     spotifySearch(query),
     fetch(`/api/search?q=${encodeURIComponent(cleanQuery)}&source=itunes`)
       .then(r => r.json()).catch(() => []),
   ]);
 
-  const spotifyResults: SearchResult[] = spotify?.albums ?? [];
+  const spotifyAlbums: SearchResult[] = spotify?.albums ?? [];
   const itunesResults: SearchResult[] = Array.isArray(itunesData) ? itunesData : [];
 
-  // Merge: Spotify first, then iTunes items not already in Spotify
-  const seen = new Set(spotifyResults.map(s =>
+  const seen = new Set(spotifyAlbums.map(s =>
     `${s.name.toLowerCase().replace(/\s*[\[(].*?[\])]/gi, "").trim()}__${s.artist.split(/feat\.|ft\.|,/i)[0].toLowerCase().trim()}`
   ));
   const extras = itunesResults.filter(item => {
@@ -103,5 +97,18 @@ export async function searchAlbums(query: string): Promise<SearchResult[]> {
     return !seen.has(key);
   });
 
-  return [...spotifyResults, ...extras];
+  return {
+    albums: [...spotifyAlbums, ...extras],
+    artists: spotify?.artists ?? [],
+  };
+}
+
+export async function searchArtists(query: string): Promise<ArtistResult[]> {
+  const result = await spotifySearch(query);
+  return result?.artists ?? [];
+}
+
+export async function searchAlbums(query: string): Promise<SearchResult[]> {
+  const { albums } = await searchAlbumsAndArtists(query);
+  return albums;
 }
