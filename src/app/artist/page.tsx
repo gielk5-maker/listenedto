@@ -41,7 +41,7 @@ function ArtistPageInner() {
   const artistName = params.get("name") ?? "";
   const supabase = createClient();
 
-  const [artistInfo, setArtistInfo] = useState<{ name: string; image: string | null } | null>(null);
+  const [artistInfo, setArtistInfo] = useState<{ name: string; image: string | null; followers: number | null } | null>(null);
   const [avgRating, setAvgRating] = useState<number | null>(null);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,10 +139,17 @@ function ArtistPageInner() {
             )}
             <div>
               <h1 className="text-2xl font-bold">{artistInfo.name}</h1>
-              {avgRating !== null
-                ? <p className="text-[var(--accent)] text-sm font-medium mt-1">★ {avgRating} avg. rating</p>
-                : <p className="text-stone-600 text-sm mt-1">No ratings yet</p>
-              }
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                {artistInfo.followers !== null && (
+                  <p className="text-stone-400 text-sm">{artistInfo.followers.toLocaleString("en")} followers</p>
+                )}
+                {avgRating !== null && (
+                  <p className="text-[var(--accent)] text-sm font-medium">★ {avgRating} avg. rating</p>
+                )}
+              </div>
+              {avgRating === null && artistInfo.followers === null && (
+                <p className="text-stone-600 text-sm mt-1">No ratings yet</p>
+              )}
             </div>
           </div>
         )}

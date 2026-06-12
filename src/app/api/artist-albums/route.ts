@@ -61,6 +61,7 @@ export async function GET(request: NextRequest) {
       artist: {
         name: artistItem.name,
         image: artistItem.images?.[0]?.url ?? null,
+        followers: artistItem.followers?.total ?? null,
       },
       albums,
     });
