@@ -33,7 +33,10 @@ async function itunesSearch(query: string) {
       const type = a.collectionType as string ?? "";
       const tracks = a.trackCount as number ?? 0;
       if (!name || !artist) return false;
-      return name && artist && !nietLatijn.test(name) && !nietLatijn.test(artist);
+      const nameLower = name.toLowerCase();
+      if (nameLower.endsWith("- single") || nameLower.endsWith("- ep")) return false;
+      if ((a.collectionType as string) === "Single") return false;
+      return !nietLatijn.test(name) && !nietLatijn.test(artist);
     })
     .map((a: Record<string, unknown>) => ({
       name: a.collectionName as string,
@@ -76,7 +79,7 @@ export async function GET(request: NextRequest) {
     const token = await getSpotifyToken();
     if (token) {
       const res = await fetch(
-        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=50`,
+        `https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=album&limit=10`,
         { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
       );
       if (res.ok) {
